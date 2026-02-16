@@ -7,7 +7,9 @@ export async function proxy(request: NextRequest) {
 
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
-  const sessionCookie = request.cookies.get("better-auth.session_token");
+  const sessionCookie =
+    request.cookies.get("better-auth.session_token") ??
+    request.cookies.get("__Secure-better-auth.session_token");
   const hasSession = !!sessionCookie?.value;
 
   if (!hasSession && !isPublic) {
