@@ -22,11 +22,8 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: true },
-  { href: "/upload", label: "Upload", icon: Upload, adminOnly: true },
   { href: "/installations", label: "Installations", icon: Wrench },
   { href: "/sellers", label: "Sellers", icon: Users, adminOnly: true },
-  { href: "/installers", label: "Installer Report", icon: HardHat, adminOnly: true },
-  { href: "/sales", label: "Sales Detail", icon: Receipt, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
