@@ -489,11 +489,16 @@ export async function validateSellerPin(sellerId: number, pin: string) {
 
 // ── Global Sellers List ──
 
-export async function getAllSellers() {
+export async function getAllSellers(weekStart?: string, weekEnd?: string) {
+  const dateFilter = weekStart && weekEnd
+    ? { transactionDate: { gte: new Date(weekStart), lte: new Date(weekEnd) } }
+    : undefined;
+
   const sellers = await prisma.seller.findMany({
     include: {
-      _count: { select: { sales: true } },
+      _count: { select: { sales: dateFilter ? { where: dateFilter } : true } },
       sales: {
+        where: dateFilter,
         select: {
           installationType: true,
           currency: true,
@@ -534,6 +539,7 @@ export async function getAllSellers() {
         lastActive,
       };
     })
+    .filter((s) => s.totalSales > 0)
     .sort((a, b) => b.totalSales - a.totalSales);
 }
 

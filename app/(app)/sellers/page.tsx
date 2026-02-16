@@ -48,8 +48,12 @@ export default function SellersPage() {
   const [sellerSaving, setSellerSaving] = useState(false);
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
 
-  const loadSellers = useCallback(async () => {
-    const data = await getAllSellers();
+  const loadSellers = useCallback(async (week?: WeekRange | null) => {
+    setLoading(true);
+    const data = await getAllSellers(
+      week ? week.start.toISOString() : undefined,
+      week ? week.end.toISOString() : undefined,
+    );
     setSellers(data);
     setLoading(false);
   }, []);
@@ -63,13 +67,21 @@ export default function SellersPage() {
         return;
       }
     });
-    loadSellers();
     getAllAvailableWeeks().then((dates) => {
       const available = getAvailableWeeks(dates.map((d) => new Date(d)));
       setWeeks(available);
-      setSelectedWeek(getLastCompleteWeek(available));
+      const lastWeek = getLastCompleteWeek(available);
+      setSelectedWeek(lastWeek);
+      loadSellers(lastWeek);
     });
-  }, [loadSellers]);
+  }, [loadSellers, router]);
+
+  // Reload sellers when week changes
+  useEffect(() => {
+    if (weeks.length > 0) {
+      loadSellers(selectedWeek);
+    }
+  }, [selectedWeek, weeks.length, loadSellers]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
