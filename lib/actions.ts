@@ -3,6 +3,22 @@
 import { prisma } from "./prisma";
 import { parseExcelFile, type ParseResult } from "./excel-parser";
 import type { Currency, InstallationType } from "@/lib/generated/prisma/client";
+import { getUserRole } from "./get-user-role";
+
+// ── Role Helpers ──
+
+export async function getCurrentUserRole() {
+  const role = await getUserRole();
+  if (!role) return null;
+  return { role };
+}
+
+async function requireAdmin() {
+  const role = await getUserRole();
+  if (role !== "admin") {
+    throw new Error("Unauthorized: admin access required");
+  }
+}
 
 // ── Commission Config ──
 
@@ -27,6 +43,7 @@ export async function updateCommissionConfig(data: {
   installerFreePercentage: number;
   installerPaidPercentage: number;
 }) {
+  await requireAdmin();
   const existing = await prisma.commissionConfig.findFirst();
   if (existing) {
     await prisma.commissionConfig.update({ where: { id: existing.id }, data });
@@ -74,6 +91,7 @@ async function findOrCreatePlan(name: string): Promise<number> {
 // ── Upload Actions ──
 
 export async function uploadFile(formData: FormData): Promise<ParseResult & { uploadId: number; dbDuplicates: number }> {
+  await requireAdmin();
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
@@ -166,6 +184,7 @@ export async function getUploads() {
 }
 
 export async function deleteUpload(uploadId: number) {
+  await requireAdmin();
   await prisma.upload.delete({ where: { id: uploadId } });
 }
 
@@ -231,11 +250,13 @@ export async function getPlanPrices() {
 }
 
 export async function createPlan(name: string, price: number) {
+  await requireAdmin();
   const plan = await prisma.plan.create({ data: { name: name.trim(), price } });
   return plan.id;
 }
 
 export async function updatePlan(id: number, name: string, price: number) {
+  await requireAdmin();
   await prisma.plan.update({
     where: { id },
     data: { name: name.trim(), price },
@@ -248,6 +269,7 @@ export async function updatePlan(id: number, name: string, price: number) {
 }
 
 export async function deletePlan(id: number) {
+  await requireAdmin();
   // Only allow deleting plans with no sales
   const count = await prisma.sale.count({ where: { planId: id } });
   if (count > 0) throw new Error("Cannot delete a plan that has sales associated with it");
@@ -430,6 +452,7 @@ export async function getSellerReport(filters: SalesFilters) {
 // ── Seller CRUD ──
 
 export async function createSeller(name: string, pin?: string) {
+  await requireAdmin();
   const seller = await prisma.seller.create({
     data: { name: name.trim(), pin: pin || null },
   });
@@ -437,6 +460,7 @@ export async function createSeller(name: string, pin?: string) {
 }
 
 export async function updateSeller(id: number, name: string, pin?: string) {
+  await requireAdmin();
   await prisma.seller.update({
     where: { id },
     data: { name: name.trim(), pin: pin !== undefined ? (pin || null) : undefined },
@@ -814,6 +838,7 @@ export async function updateInstallation(
     referenceCode?: string;
   }
 ) {
+  await requireAdmin();
   const seller = await prisma.seller.findUnique({ where: { id: data.sellerId }, select: { name: true } });
   if (!seller) throw new Error("Seller not found");
 
@@ -840,5 +865,6 @@ export async function updateInstallation(
 }
 
 export async function deleteInstallation(id: number) {
+  await requireAdmin();
   await prisma.sale.delete({ where: { id } });
 }

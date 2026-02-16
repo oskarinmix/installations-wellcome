@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWeeks, createSeller, updateSeller } from "@/lib/actions";
+import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWeeks, createSeller, updateSeller, getCurrentUserRole } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Search, Users, ChevronLeft, ChevronRight, FileText, Download, Loader2, Plus, Pencil } from "lucide-react";
 
@@ -46,6 +46,7 @@ export default function SellersPage() {
   const [sellerName, setSellerName] = useState("");
   const [sellerPin, setSellerPin] = useState("");
   const [sellerSaving, setSellerSaving] = useState(false);
+  const [role, setRole] = useState<"admin" | "agent" | null>(null);
 
   const loadSellers = useCallback(async () => {
     const data = await getAllSellers();
@@ -54,6 +55,14 @@ export default function SellersPage() {
   }, []);
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      const r = res?.role ?? null;
+      setRole(r);
+      if (r === "agent") {
+        router.replace("/installations");
+        return;
+      }
+    });
     loadSellers();
     getAllAvailableWeeks().then((dates) => {
       const available = getAvailableWeeks(dates.map((d) => new Date(d)));
@@ -207,9 +216,11 @@ export default function SellersPage() {
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <span>👥</span> Sellers
         </h1>
-        <Button className="gap-1" onClick={openCreateSeller}>
-          <Plus className="h-4 w-4" /> New Seller
-        </Button>
+        {role === "admin" && (
+          <Button className="gap-1" onClick={openCreateSeller}>
+            <Plus className="h-4 w-4" /> New Seller
+          </Button>
+        )}
       </div>
 
       {/* Search, Filters & Week */}
@@ -283,7 +294,7 @@ export default function SellersPage() {
                   <SortHead label="💰 Comm. BCV" sortKey="commissionBCV" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
                   <SortHead label="📅 Last Active" sortKey="lastActive" current={sortKey} dir={sortDir} onSort={handleSort} />
                   <TableHead className="w-20 text-center">📄 Report</TableHead>
-                  <TableHead className="w-10" />
+                  {role === "admin" && <TableHead className="w-10" />}
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -328,18 +339,20 @@ export default function SellersPage() {
                         <FileText className="h-4 w-4" />
                       </button>
                     </TableCell>
-                    <TableCell>
-                      <button
-                        title="Edit seller"
-                        className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditSeller(seller);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </TableCell>
+                    {role === "admin" && (
+                      <TableCell>
+                        <button
+                          title="Edit seller"
+                          className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditSeller(seller);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </TableCell>
+                    )}
                     <TableCell>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </TableCell>

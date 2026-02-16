@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { UploadSelector } from "@/components/upload-selector";
 import { FilterBar } from "@/components/filter-bar";
 import { KpiCard } from "@/components/kpi-card";
-import { getUploads, getInstallerReport, getFilterOptions } from "@/lib/actions";
+import { getUploads, getInstallerReport, getFilterOptions, getCurrentUserRole } from "@/lib/actions";
 
 const emptyFilters = { startDate: "", endDate: "", seller: "", zones: [] as string[], currency: "", installationType: "" };
 
@@ -16,6 +17,7 @@ interface Upload {
 }
 
 export default function InstallersPage() {
+  const router = useRouter();
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [selectedUpload, setSelectedUpload] = useState("");
   const [filters, setFilters] = useState(emptyFilters);
@@ -23,6 +25,12 @@ export default function InstallersPage() {
   const [data, setData] = useState<Awaited<ReturnType<typeof getInstallerReport>> | null>(null);
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      if (res?.role !== "admin") {
+        router.replace("/installations");
+        return;
+      }
+    });
     getUploads().then((u) => {
       setUploads(u);
       if (u.length > 0) setSelectedUpload(String(u[0].id));

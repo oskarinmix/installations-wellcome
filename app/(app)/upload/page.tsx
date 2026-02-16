@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { uploadFile, getUploads, deleteUpload } from "@/lib/actions";
+import { uploadFile, getUploads, deleteUpload, getCurrentUserRole } from "@/lib/actions";
 import { Upload, Trash2, FileSpreadsheet, CheckCircle2, AlertTriangle } from "lucide-react";
 
 interface UploadRecord {
@@ -37,6 +38,7 @@ interface UploadResult {
 }
 
 export default function UploadPage() {
+  const router = useRouter();
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
@@ -48,8 +50,14 @@ export default function UploadPage() {
   };
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      if (res?.role !== "admin") {
+        router.replace("/installations");
+        return;
+      }
+    });
     loadUploads();
-  }, []);
+  }, [router]);
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

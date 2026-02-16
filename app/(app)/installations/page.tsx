@@ -27,6 +27,7 @@ import {
   createInstallation,
   updateInstallation,
   deleteInstallation,
+  getCurrentUserRole,
 } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Combobox } from "@/components/ui/combobox";
@@ -87,8 +88,10 @@ export default function InstallationsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Installation | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [role, setRole] = useState<"admin" | "agent" | null>(null);
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => setRole(res?.role ?? null));
     getGlobalFilterOptions().then(setFilterOptions);
     getAllAvailableWeeks().then((dates) => {
       const available = getAvailableWeeks(dates.map((d) => new Date(d)));
@@ -450,7 +453,7 @@ export default function InstallationsPage() {
                     <TableHead>🤝 Seller Comm.</TableHead>
                     <TableHead>🔧 Inst. Comm.</TableHead>
                     <TableHead>🔗 Reference</TableHead>
-                    <TableHead className="w-20 text-center">Actions</TableHead>
+                    {role === "admin" && <TableHead className="w-20 text-center">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -482,24 +485,26 @@ export default function InstallationsPage() {
                       <TableCell className="font-mono">${row.sellerCommission.toFixed(2)}</TableCell>
                       <TableCell className="font-mono">${row.installerCommission.toFixed(2)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{row.referenceCode || "—"}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            title="Edit installation"
-                            className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
-                            onClick={() => handleOpenEdit(row)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            title="Delete installation"
-                            className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-red-100 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
-                            onClick={() => setDeleteTarget(row)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </TableCell>
+                      {role === "admin" && (
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              title="Edit installation"
+                              className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
+                              onClick={() => handleOpenEdit(row)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              title="Delete installation"
+                              className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-red-100 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
+                              onClick={() => setDeleteTarget(row)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

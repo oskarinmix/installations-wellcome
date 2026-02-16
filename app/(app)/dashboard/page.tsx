@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { FilterBar } from "@/components/filter-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { Label } from "@/components/ui/label";
-import { getDashboardData, getGlobalFilterOptions, getAllAvailableWeeks } from "@/lib/actions";
+import { getDashboardData, getGlobalFilterOptions, getAllAvailableWeeks, getCurrentUserRole } from "@/lib/actions";
 import { getAvailableWeeks, type WeekRange } from "@/lib/week-utils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -16,6 +17,7 @@ const COLORS = ["#2563eb", "#16a34a", "#ea580c", "#9333ea", "#dc2626", "#0891b2"
 const emptyFilters = { startDate: "", endDate: "", seller: "", zones: [] as string[], currency: "", installationType: "" };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [filters, setFilters] = useState(emptyFilters);
   const [filterOptions, setFilterOptions] = useState<{ sellers: string[]; zones: string[] }>({ sellers: [], zones: [] });
   const [data, setData] = useState<Awaited<ReturnType<typeof getDashboardData>> | null>(null);
@@ -25,6 +27,12 @@ export default function DashboardPage() {
   const [selectedWeek, setSelectedWeek] = useState<string>("");
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      if (res?.role !== "admin") {
+        router.replace("/installations");
+        return;
+      }
+    });
     getGlobalFilterOptions().then(setFilterOptions);
     getAllAvailableWeeks().then((dates) => {
       const available = getAvailableWeeks(dates.map((d) => new Date(d)));

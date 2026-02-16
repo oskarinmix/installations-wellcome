@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +12,7 @@ import { WeekSelector } from "@/components/week-selector";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getSellerDetail, getSellerAvailableWeeks, generateSellerReport } from "@/lib/actions";
+import { getSellerDetail, getSellerAvailableWeeks, generateSellerReport, getCurrentUserRole } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { ArrowLeft, FileText, Download, Loader2 } from "lucide-react";
 import {
@@ -24,6 +24,7 @@ type SellerDetailData = Awaited<ReturnType<typeof getSellerDetail>>;
 
 export default function SellerDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const sellerId = Number(params.id);
 
   const [weeks, setWeeks] = useState<WeekRange[]>([]);
@@ -32,6 +33,14 @@ export default function SellerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+
+  useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      if (res?.role !== "admin") {
+        router.replace("/installations");
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     getSellerAvailableWeeks(sellerId).then((dates) => {

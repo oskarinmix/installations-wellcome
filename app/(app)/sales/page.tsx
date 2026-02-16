@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { UploadSelector } from "@/components/upload-selector";
 import { FilterBar } from "@/components/filter-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { getUploads, getSales, getFilterOptions } from "@/lib/actions";
+import { getUploads, getSales, getFilterOptions, getCurrentUserRole } from "@/lib/actions";
 import { Receipt } from "lucide-react";
 
 const emptyFilters = { startDate: "", endDate: "", seller: "", zones: [] as string[], currency: "", installationType: "" };
@@ -21,6 +22,7 @@ interface Upload {
 type Sale = Awaited<ReturnType<typeof getSales>>[number];
 
 export default function SalesPage() {
+  const router = useRouter();
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [selectedUpload, setSelectedUpload] = useState("");
   const [filters, setFilters] = useState(emptyFilters);
@@ -28,6 +30,12 @@ export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      if (res?.role !== "admin") {
+        router.replace("/installations");
+        return;
+      }
+    });
     getUploads().then((u) => {
       setUploads(u);
       if (u.length > 0) setSelectedUpload(String(u[0].id));

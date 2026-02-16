@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,13 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig } from "@/lib/actions";
+import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole } from "@/lib/actions";
 import { Plus, Pencil, Trash2, Package, Settings2 } from "lucide-react";
 
 type Plan = { id: number; name: string; price: number };
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,9 +54,15 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
+    getCurrentUserRole().then((res) => {
+      if (res?.role !== "admin") {
+        router.replace("/installations");
+        return;
+      }
+    });
     loadPlans();
     loadCommConfig();
-  }, [loadPlans, loadCommConfig]);
+  }, [loadPlans, loadCommConfig, router]);
 
   const openCreate = () => {
     setEditingPlan(null);
