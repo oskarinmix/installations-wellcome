@@ -24,7 +24,12 @@
       "Bash(git push:*)",
       "WebFetch(domain:www.better-auth.com)",
       "WebSearch",
-      "Bash(npx @better-auth/cli@latest generate:*)"
+      "Bash(npx @better-auth/cli@latest generate:*)",
+      "Bash(npx ts-node --compiler-options '{\"\"module\"\":\"\"commonjs\"\"}' -e \"\nconst { PrismaClient } = require\\(''./lib/generated/prisma/client''\\);\nconst p = new PrismaClient\\(\\);\np.session.findFirst\\({ select: { token: true } }\\).then\\(s => { console.log\\(''Token sample:'', s?.token?.substring\\(0, 40\\)\\); p.$disconnect\\(\\); }\\);\n\")",
+      "Bash(node:*)",
+      "Bash(DATABASE_URL=\"$DATABASE_URL\" npx tsx:*)",
+      "Bash(source .env)",
+      "Bash(curl:*)"
     ]
   }
 }

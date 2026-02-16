@@ -1,23 +1,36 @@
-import { headers } from "next/headers";
-import { auth } from "./auth";
+import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
 /**
- * Uses better-auth's getSession to authenticate, then looks up the user's role.
+ * Reads the better-auth session cookie, looks up the session + user in DB,
+ * and returns the user's role or null.
  */
 export async function getUserRole(): Promise<"admin" | "agent" | null> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  try {
+    const cookieStore = await cookies();
 
-  if (!session?.user?.id) return null;
+    // better-auth may use different cookie names depending on environment
+    const rawToken =
+      cookieStore.get("better-auth.session_token")?.value ??
+      cookieStore.get("__Secure-better-auth.session_token")?.value;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true },
-  });
+    if (!rawToken) return null;
 
-  if (!user) return null;
+    // Cookie format is "token.signature" — extract just the token part
+    const token = rawToken.split(".")[0];
 
-  return user.role as "admin" | "agent";
+    const session = await prisma.session.findUnique({
+      where: { token },
+      select: {
+        expiresAt: true,
+        user: { select: { role: true } },
+      },
+    });
+
+    if (!session || session.expiresAt < new Date()) return null;
+
+    return session.user.role as "admin" | "agent";
+  } catch {
+    return null;
+  }
 }
