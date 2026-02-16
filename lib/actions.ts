@@ -2,7 +2,7 @@
 
 import { prisma } from "./prisma";
 import { parseExcelFile, type ParseResult } from "./excel-parser";
-import type { Currency, InstallationType } from "@/app/generated/prisma/client";
+import type { Currency, InstallationType } from "@/lib/generated/prisma/client";
 
 // ── Commission Config ──
 
