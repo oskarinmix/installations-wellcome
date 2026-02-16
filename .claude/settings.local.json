@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npx shadcn@latest add button card table select input tabs badge dialog separator dropdown-menu calendar popover label -y)",
+      "Bash(npx shadcn@latest add button card table select input tabs badge dialog separator dropdown-menu calendar popover label --overwrite -y)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm run build:*)",
+      "Bash(ls:*)",
+      "Bash(npx next build)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"continue\" npx prisma migrate reset:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx prisma db seed:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"Yes, reset it\" npx prisma migrate reset:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx shadcn@latest add:*)"
+    ]
+  }
+}
