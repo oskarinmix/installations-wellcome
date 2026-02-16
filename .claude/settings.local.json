@@ -29,7 +29,8 @@
       "Bash(node:*)",
       "Bash(DATABASE_URL=\"$DATABASE_URL\" npx tsx:*)",
       "Bash(source .env)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }

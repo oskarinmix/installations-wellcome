@@ -20,6 +20,34 @@ async function requireAdmin() {
   }
 }
 
+// ── User Management ──
+
+export async function getAllUsers() {
+  await requireAdmin();
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return users.map((u) => ({
+    ...u,
+    role: u.role as "admin" | "agent",
+  }));
+}
+
+export async function updateUserRole(userId: string, role: "admin" | "agent") {
+  await requireAdmin();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+}
+
 // ── Commission Config ──
 
 type CommissionConfigData = {
@@ -656,6 +684,48 @@ export async function generateSellerReport(
     ...detail,
     weekLabel,
   });
+  return pdfBuffer.toString("base64");
+}
+
+// ── Bulk Seller Reports ──
+
+export async function getSellersSummaryForWeek(weekStart: string, weekEnd: string) {
+  const sellers = await prisma.seller.findMany({
+    include: {
+      sales: {
+        where: {
+          transactionDate: { gte: new Date(weekStart), lte: new Date(weekEnd) },
+        },
+        select: { id: true },
+      },
+    },
+  });
+
+  return sellers
+    .filter((s) => s.sales.length > 0)
+    .map((s) => ({ id: s.id, name: s.name, salesCount: s.sales.length }))
+    .sort((a, b) => b.salesCount - a.salesCount);
+}
+
+export async function generateAllSellerReports(
+  weekStart: string,
+  weekEnd: string,
+  weekLabel: string
+) {
+  await requireAdmin();
+  const { generateAllSellersPdf } = await import("./generate-pdf");
+
+  const sellers = await getSellersSummaryForWeek(weekStart, weekEnd);
+  if (sellers.length === 0) throw new Error("No sellers with sales in this week");
+
+  const allData = [];
+  for (const seller of sellers) {
+    const detail = await getSellerDetail(seller.id, weekStart, weekEnd);
+    if (detail.totalSales === 0) continue;
+    allData.push({ ...detail, weekLabel });
+  }
+
+  const pdfBuffer = generateAllSellersPdf(allData);
   return pdfBuffer.toString("base64");
 }
 

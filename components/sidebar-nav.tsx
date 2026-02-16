@@ -9,11 +9,9 @@ import { authClient } from "@/lib/auth-client";
 import { getCurrentUserRole } from "@/lib/actions";
 import {
   LayoutDashboard,
-  Upload,
   Wrench,
   Users,
-  HardHat,
-  Receipt,
+  FileText,
   Sun,
   Moon,
   Settings,
@@ -24,6 +22,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: true },
   { href: "/installations", label: "Installations", icon: Wrench },
   { href: "/sellers", label: "Sellers", icon: Users, adminOnly: true },
+  { href: "/reports", label: "Reports", icon: FileText, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 

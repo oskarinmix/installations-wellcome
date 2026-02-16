@@ -27,13 +27,13 @@ interface PdfData {
   transactions: PdfTransaction[];
 }
 
-export function generateSellerPdf(data: PdfData): Buffer {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
+function addSellerToDoc(doc: jsPDF, data: PdfData, isFirst: boolean) {
+  if (!isFirst) doc.addPage();
   let y = 15;
 
   // Title
   doc.setFontSize(18);
+  doc.setTextColor(0);
   doc.text(`Seller Report: ${data.sellerName}`, 14, y);
   y += 8;
 
@@ -130,8 +130,10 @@ export function generateSellerPdf(data: PdfData): Buffer {
       },
     });
   }
+}
 
-  // Footer
+function addFooters(doc: jsPDF) {
+  const pageWidth = doc.internal.pageSize.getWidth();
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -144,6 +146,18 @@ export function generateSellerPdf(data: PdfData): Buffer {
       { align: "center" }
     );
   }
+}
 
+export function generateSellerPdf(data: PdfData): Buffer {
+  const doc = new jsPDF();
+  addSellerToDoc(doc, data, true);
+  addFooters(doc);
+  return Buffer.from(doc.output("arraybuffer"));
+}
+
+export function generateAllSellersPdf(sellers: PdfData[]): Buffer {
+  const doc = new jsPDF();
+  sellers.forEach((data, i) => addSellerToDoc(doc, data, i === 0));
+  addFooters(doc);
   return Buffer.from(doc.output("arraybuffer"));
 }

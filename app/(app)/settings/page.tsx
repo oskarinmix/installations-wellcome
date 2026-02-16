@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole } from "@/lib/actions";
-import { Plus, Pencil, Trash2, Package, Settings2 } from "lucide-react";
+import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole, getAllUsers, updateUserRole } from "@/lib/actions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Pencil, Trash2, Package, Settings2, Users } from "lucide-react";
 
 type Plan = { id: number; name: string; price: number };
 
@@ -42,6 +43,12 @@ export default function SettingsPage() {
   const [commForm, setCommForm] = useState(commConfig);
   const [commSaving, setCommSaving] = useState(false);
 
+  // Users state
+  type UserRow = { id: string; name: string; email: string; role: "admin" | "agent"; createdAt: Date };
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
+
   const loadPlans = useCallback(async () => {
     const data = await getPlanPrices();
     setPlans(data);
@@ -53,6 +60,12 @@ export default function SettingsPage() {
     setCommConfig(config);
   }, []);
 
+  const loadUsers = useCallback(async () => {
+    const data = await getAllUsers();
+    setUsers(data);
+    setUsersLoading(false);
+  }, []);
+
   useEffect(() => {
     getCurrentUserRole().then((res) => {
       if (res?.role !== "admin") {
@@ -62,7 +75,20 @@ export default function SettingsPage() {
     });
     loadPlans();
     loadCommConfig();
-  }, [loadPlans, loadCommConfig, router]);
+    loadUsers();
+  }, [loadPlans, loadCommConfig, loadUsers, router]);
+
+  const handleRoleChange = async (userId: string, newRole: "admin" | "agent") => {
+    setRoleUpdating(userId);
+    try {
+      await updateUserRole(userId, newRole);
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update role");
+    } finally {
+      setRoleUpdating(null);
+    }
+  };
 
   const openCreate = () => {
     setEditingPlan(null);
@@ -276,6 +302,59 @@ export default function SettingsPage() {
               <p className="text-xl font-bold">{(commConfig.installerPaidPercentage * 100).toFixed(0)}%</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Users Section */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Users
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {usersLoading ? (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">Loading...</div>
+          ) : users.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-muted-foreground">
+              <span className="text-4xl mb-3">📭</span>
+              <p className="text-sm">No users found.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="w-40">Role</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.role}
+                        onValueChange={(v) => handleRoleChange(user.id, v as "admin" | "agent")}
+                        disabled={roleUpdating === user.id}
+                      >
+                        <SelectTrigger className="w-32 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="agent">Agent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
