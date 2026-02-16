@@ -177,6 +177,7 @@ export interface SalesFilters {
   endDate?: string;
   seller?: string;
   zone?: string;
+  zones?: string[];
   currency?: Currency;
   installationType?: InstallationType;
 }
@@ -192,7 +193,11 @@ function buildWhere(filters: SalesFilters) {
     where.transactionDate = dateFilter;
   }
   if (filters.seller) where.sellerName = filters.seller;
-  if (filters.zone) where.zone = filters.zone;
+  if (filters.zones && filters.zones.length > 0) {
+    where.zone = { in: filters.zones };
+  } else if (filters.zone) {
+    where.zone = filters.zone;
+  }
   if (filters.currency) where.currency = filters.currency;
   if (filters.installationType) where.installationType = filters.installationType;
 
@@ -424,21 +429,38 @@ export async function getSellerReport(filters: SalesFilters) {
 
 // ── Seller CRUD ──
 
-export async function createSeller(name: string) {
-  const seller = await prisma.seller.create({ data: { name: name.trim() } });
+export async function createSeller(name: string, pin?: string) {
+  const seller = await prisma.seller.create({
+    data: { name: name.trim(), pin: pin || null },
+  });
   return seller.id;
 }
 
-export async function updateSeller(id: number, name: string) {
+export async function updateSeller(id: number, name: string, pin?: string) {
   await prisma.seller.update({
     where: { id },
-    data: { name: name.trim() },
+    data: { name: name.trim(), pin: pin !== undefined ? (pin || null) : undefined },
   });
   // Also update denormalized sellerName on all sales
   await prisma.sale.updateMany({
     where: { sellerId: id },
     data: { sellerName: name.trim() },
   });
+}
+
+// ── Seller PIN Validation ──
+
+export async function validateSellerPin(sellerId: number, pin: string) {
+  const seller = await prisma.seller.findUnique({
+    where: { id: sellerId },
+    select: { name: true, pin: true },
+  });
+
+  if (!seller || !seller.pin || seller.pin !== pin) {
+    return { valid: false as const };
+  }
+
+  return { valid: true as const, sellerName: seller.name };
 }
 
 // ── Global Sellers List ──
@@ -480,6 +502,7 @@ export async function getAllSellers() {
       return {
         id: seller.id,
         sellerName: seller.name,
+        pin: seller.pin,
         totalSales: seller._count.sales,
         totalRevenue,
         commissionUSD,
@@ -612,6 +635,7 @@ export interface InstallationsFilters {
   search?: string;
   seller?: string;
   zone?: string;
+  zones?: string[];
   currency?: Currency;
   installationType?: InstallationType;
   startDate?: string;
@@ -622,7 +646,11 @@ export async function getAllInstallations(filters: InstallationsFilters) {
   const where: Record<string, unknown> = {};
 
   if (filters.seller) where.sellerName = filters.seller;
-  if (filters.zone) where.zone = filters.zone;
+  if (filters.zones && filters.zones.length > 0) {
+    where.zone = { in: filters.zones };
+  } else if (filters.zone) {
+    where.zone = filters.zone;
+  }
   if (filters.currency) where.currency = filters.currency;
   if (filters.installationType) where.installationType = filters.installationType;
 

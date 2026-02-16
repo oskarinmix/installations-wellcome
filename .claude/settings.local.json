@@ -21,7 +21,10 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:www.better-auth.com)",
+      "WebSearch",
+      "Bash(npx @better-auth/cli@latest generate:*)"
     ]
   }
 }

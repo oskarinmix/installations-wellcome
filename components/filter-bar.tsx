@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 interface FilterBarProps {
   sellers: string[];
@@ -12,11 +13,11 @@ interface FilterBarProps {
     startDate: string;
     endDate: string;
     seller: string;
-    zone: string;
+    zones: string[];
     currency: string;
     installationType: string;
   };
-  onChange: (key: string, value: string) => void;
+  onChange: (key: string, value: string | string[]) => void;
   onClear: () => void;
   disableDates?: boolean;
 }
@@ -60,17 +61,11 @@ export function FilterBar({ sellers, zones, filters, onChange, onClear, disableD
       </div>
       <div className="space-y-1">
         <Label className="text-xs">Zone</Label>
-        <Select value={filters.zone || "all"} onValueChange={(v) => onChange("zone", v === "all" ? "" : v)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Zones" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Zones</SelectItem>
-            {zones.map((z) => (
-              <SelectItem key={z} value={z}>{z}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <MultiSelect
+          options={zones}
+          value={filters.zones}
+          onValueChange={(v) => onChange("zones", v)}
+        />
       </div>
       <div className="space-y-1">
         <Label className="text-xs">Currency</Label>

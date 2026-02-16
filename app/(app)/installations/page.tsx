@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,7 @@ const emptyFilters = {
   startDate: "",
   endDate: "",
   seller: "",
-  zone: "",
+  zones: [] as string[],
   currency: "",
   installationType: "",
 };
@@ -114,7 +115,7 @@ export default function InstallationsPage() {
       startDate,
       endDate,
       seller: filters.seller || undefined,
-      zone: filters.zone || undefined,
+      zones: filters.zones.length > 0 ? filters.zones : undefined,
       currency: (filters.currency || undefined) as "USD" | "BCV" | undefined,
       installationType: (filters.installationType || undefined) as "FREE" | "PAID" | undefined,
     });
@@ -180,7 +181,7 @@ export default function InstallationsPage() {
     return { total, free, paid, revenueUSD, revenueBCV, commUSD, commBCV, instCommUSD, instCommBCV };
   }, [data]);
 
-  const onChange = (key: string, value: string) => setFilters((f) => ({ ...f, [key]: value }));
+  const onChange = (key: string, value: string | string[]) => setFilters((f) => ({ ...f, [key]: value }));
 
   // Dialog helpers
   const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
@@ -384,13 +385,11 @@ export default function InstallationsPage() {
           </div>
           <div className="space-y-1">
             <Label className="text-xs">📍 Zone</Label>
-            <Select value={filters.zone || "all"} onValueChange={(v) => onChange("zone", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Zones" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Zones</SelectItem>
-                {filterOptions.zones.map((z) => <SelectItem key={z} value={z}>{z}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MultiSelect
+              options={filterOptions.zones}
+              value={filters.zones}
+              onValueChange={(v) => setFilters((f) => ({ ...f, zones: v }))}
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">💱 Currency</Label>
@@ -414,7 +413,7 @@ export default function InstallationsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" size="sm" onClick={() => { setFilters(emptyFilters); setSelectedWeek(""); }} className="gap-1">
+          <Button variant="outline" size="sm" onClick={() => { setFilters({ ...emptyFilters, zones: [] }); setSelectedWeek(""); }} className="gap-1">
             <X className="h-3.5 w-3.5" /> Clear
           </Button>
         </div>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { getUploads, getSales, getFilterOptions } from "@/lib/actions";
 import { Receipt } from "lucide-react";
 
-const emptyFilters = { startDate: "", endDate: "", seller: "", zone: "", currency: "", installationType: "" };
+const emptyFilters = { startDate: "", endDate: "", seller: "", zones: [] as string[], currency: "", installationType: "" };
 
 interface Upload {
   id: number;
@@ -45,7 +45,7 @@ export default function SalesPage() {
       startDate: filters.startDate || undefined,
       endDate: filters.endDate || undefined,
       seller: filters.seller || undefined,
-      zone: filters.zone || undefined,
+      zones: filters.zones.length > 0 ? filters.zones : undefined,
       currency: (filters.currency || undefined) as "USD" | "BCV" | undefined,
       installationType: (filters.installationType || undefined) as "FREE" | "PAID" | undefined,
     });

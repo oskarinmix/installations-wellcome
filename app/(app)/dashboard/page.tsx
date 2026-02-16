@@ -13,7 +13,7 @@ import {
 
 const COLORS = ["#2563eb", "#16a34a", "#ea580c", "#9333ea", "#dc2626", "#0891b2"];
 
-const emptyFilters = { startDate: "", endDate: "", seller: "", zone: "", currency: "", installationType: "" };
+const emptyFilters = { startDate: "", endDate: "", seller: "", zones: [] as string[], currency: "", installationType: "" };
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState(emptyFilters);
@@ -47,7 +47,7 @@ export default function DashboardPage() {
       startDate,
       endDate,
       seller: filters.seller || undefined,
-      zone: filters.zone || undefined,
+      zones: filters.zones.length > 0 ? filters.zones : undefined,
       currency: (filters.currency || undefined) as "USD" | "BCV" | undefined,
       installationType: (filters.installationType || undefined) as "FREE" | "PAID" | undefined,
     });
@@ -97,7 +97,7 @@ export default function DashboardPage() {
             setFilters((f) => ({ ...f, [key]: value }));
             if (key === "startDate" || key === "endDate") setSelectedWeek("");
           }}
-          onClear={() => { setFilters(emptyFilters); setSelectedWeek(""); }}
+          onClear={() => { setFilters({ ...emptyFilters, zones: [] }); setSelectedWeek(""); }}
           disableDates={!!selectedWeek}
         />
       </div>

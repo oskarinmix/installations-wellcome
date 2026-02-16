@@ -42,8 +42,9 @@ export default function SellersPage() {
 
   // Create/Edit seller dialog
   const [sellerDialogOpen, setSellerDialogOpen] = useState(false);
-  const [editingSeller, setEditingSeller] = useState<{ id: number; name: string } | null>(null);
+  const [editingSeller, setEditingSeller] = useState<{ id: number; name: string; pin: string | null } | null>(null);
   const [sellerName, setSellerName] = useState("");
+  const [sellerPin, setSellerPin] = useState("");
   const [sellerSaving, setSellerSaving] = useState(false);
 
   const loadSellers = useCallback(async () => {
@@ -170,12 +171,14 @@ export default function SellersPage() {
   const openCreateSeller = () => {
     setEditingSeller(null);
     setSellerName("");
+    setSellerPin("");
     setSellerDialogOpen(true);
   };
 
   const openEditSeller = (seller: SellerRow) => {
-    setEditingSeller({ id: seller.id, name: seller.sellerName });
+    setEditingSeller({ id: seller.id, name: seller.sellerName, pin: seller.pin ?? null });
     setSellerName(seller.sellerName);
+    setSellerPin(seller.pin ?? "");
     setSellerDialogOpen(true);
   };
 
@@ -185,9 +188,9 @@ export default function SellersPage() {
     setSellerSaving(true);
     try {
       if (editingSeller) {
-        await updateSeller(editingSeller.id, sellerName);
+        await updateSeller(editingSeller.id, sellerName, sellerPin || undefined);
       } else {
-        await createSeller(sellerName);
+        await createSeller(sellerName, sellerPin || undefined);
       }
       setSellerDialogOpen(false);
       loadSellers();
@@ -561,6 +564,21 @@ export default function SellersPage() {
                 required
                 autoFocus
               />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="sellerPin">PIN (4 digits)</Label>
+              <Input
+                id="sellerPin"
+                type="password"
+                placeholder="e.g. 1234"
+                value={sellerPin}
+                onChange={(e) => setSellerPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                maxLength={4}
+                inputMode="numeric"
+              />
+              <p className="text-xs text-muted-foreground">
+                Used by the seller to access the public consult page.
+              </p>
             </div>
             <DialogFooter>
               <Button variant="outline" type="button" onClick={() => setSellerDialogOpen(false)}>

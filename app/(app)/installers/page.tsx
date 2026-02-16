@@ -6,7 +6,7 @@ import { FilterBar } from "@/components/filter-bar";
 import { KpiCard } from "@/components/kpi-card";
 import { getUploads, getInstallerReport, getFilterOptions } from "@/lib/actions";
 
-const emptyFilters = { startDate: "", endDate: "", seller: "", zone: "", currency: "", installationType: "" };
+const emptyFilters = { startDate: "", endDate: "", seller: "", zones: [] as string[], currency: "", installationType: "" };
 
 interface Upload {
   id: number;
@@ -40,7 +40,7 @@ export default function InstallersPage() {
       startDate: filters.startDate || undefined,
       endDate: filters.endDate || undefined,
       seller: filters.seller || undefined,
-      zone: filters.zone || undefined,
+      zones: filters.zones.length > 0 ? filters.zones : undefined,
       currency: (filters.currency || undefined) as "USD" | "BCV" | undefined,
       installationType: (filters.installationType || undefined) as "FREE" | "PAID" | undefined,
     });
