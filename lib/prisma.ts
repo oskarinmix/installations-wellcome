@@ -7,8 +7,19 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  console.log("[PRISMA] Creating pg.Pool...", {
+    hasDbUrl: !!process.env.DATABASE_URL,
+    dbHost: process.env.DATABASE_URL?.match(/@([^:/]+)/)?.[1] ?? "unknown",
+  });
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 10000,
+  });
+  pool.on("error", (err) => console.error("[PRISMA] Pool error:", err.message));
+  pool.on("connect", () => console.log("[PRISMA] Pool connected successfully"));
   const adapter = new PrismaPg(pool);
+  console.log("[PRISMA] PrismaClient created with pg adapter");
   return new PrismaClient({ adapter });
 }
 
