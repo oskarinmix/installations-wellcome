@@ -31,7 +31,13 @@ import {
 } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Combobox } from "@/components/ui/combobox";
-import { Search, Wrench, X, Plus, Pencil, Trash2 } from "lucide-react";
+import { Search, Wrench, X, Plus, Pencil, Trash2, Download, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 
 type Installation = Awaited<ReturnType<typeof getAllInstallations>>[number];
@@ -277,15 +283,86 @@ export default function InstallationsPage() {
     }
   };
 
+  const getExportData = () => {
+    const headers = ["Fecha", "Cliente", "Vendedor", "Zona", "Plan", "Tipo", "Método Pago", "Moneda", "Monto", "Com. Vendedor", "Com. Instalador", "Referencia"];
+    const rows = sorted.map((row) => [
+      new Date(row.transactionDate).toLocaleDateString("es", { year: "numeric", month: "2-digit", day: "2-digit" }),
+      row.customerName,
+      row.sellerName,
+      row.zone,
+      row.plan,
+      row.installationType,
+      row.paymentMethod || "",
+      row.currency,
+      Number((row.expectedPrice ?? row.subscriptionAmount).toFixed(2)),
+      Number(row.sellerCommission.toFixed(2)),
+      Number(row.installerCommission.toFixed(2)),
+      row.referenceCode || "",
+    ]);
+    return { headers, rows };
+  };
+
+  const handleExportExcel = async () => {
+    if (sorted.length === 0) return;
+    const XLSX = await import("xlsx");
+    const { headers, rows } = getExportData();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const colWidths = headers.map((h, i) => {
+      const max = Math.max(h.length, ...rows.map((r) => String(r[i]).length));
+      return { wch: Math.min(max + 2, 30) };
+    });
+    ws["!cols"] = colWidths;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Instalaciones");
+    XLSX.writeFile(wb, `instalaciones_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const handleExportPdf = async () => {
+    if (sorted.length === 0) return;
+    const { default: jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
+    const { headers, rows } = getExportData();
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    doc.setFontSize(14);
+    doc.text("Instalaciones", 14, 15);
+    doc.setFontSize(8);
+    doc.text(`Exportado: ${new Date().toLocaleDateString("es")} — ${sorted.length} registros`, 14, 21);
+    autoTable(doc, {
+      head: [headers],
+      body: rows.map((r) => r.map(String)),
+      startY: 25,
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [37, 99, 235], fontSize: 7 },
+    });
+    doc.save(`instalaciones_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <span>🔧</span> Instalaciones
         </h1>
-        <Button className="gap-1" onClick={handleOpenDialog}>
-          <Plus className="h-4 w-4" /> Nueva
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-1" disabled={sorted.length === 0}>
+                <Download className="h-4 w-4" /> Exportar <ChevronDown className="h-3 w-3 ml-0.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportExcel} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" /> Excel (.xlsx)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPdf} className="gap-2">
+                <FileText className="h-4 w-4" /> PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button className="gap-1" onClick={handleOpenDialog}>
+            <Plus className="h-4 w-4" /> Nueva
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
