@@ -31,7 +31,7 @@ export function FilterBar({ sellers, zones, filters, onChange, onClear, disableD
           type="date"
           value={filters.startDate}
           onChange={(e) => onChange("startDate", e.target.value)}
-          className="w-[160px]"
+          className="w-full sm:w-[160px]"
           disabled={disableDates}
         />
       </div>
@@ -41,14 +41,14 @@ export function FilterBar({ sellers, zones, filters, onChange, onClear, disableD
           type="date"
           value={filters.endDate}
           onChange={(e) => onChange("endDate", e.target.value)}
-          className="w-[160px]"
+          className="w-full sm:w-[160px]"
           disabled={disableDates}
         />
       </div>
       <div className="space-y-1">
         <Label className="text-xs">Vendedor</Label>
         <Select value={filters.seller || "all"} onValueChange={(v) => onChange("seller", v === "all" ? "" : v)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Todos los Vendedores" />
           </SelectTrigger>
           <SelectContent>
@@ -70,7 +70,7 @@ export function FilterBar({ sellers, zones, filters, onChange, onClear, disableD
       <div className="space-y-1">
         <Label className="text-xs">Moneda</Label>
         <Select value={filters.currency || "all"} onValueChange={(v) => onChange("currency", v === "all" ? "" : v)}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-full sm:w-[130px]">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +83,7 @@ export function FilterBar({ sellers, zones, filters, onChange, onClear, disableD
       <div className="space-y-1">
         <Label className="text-xs">Tipo</Label>
         <Select value={filters.installationType || "all"} onValueChange={(v) => onChange("installationType", v === "all" ? "" : v)}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-full sm:w-[130px]">
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
           <SelectContent>

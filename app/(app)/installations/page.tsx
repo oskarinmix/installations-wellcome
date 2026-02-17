@@ -279,7 +279,7 @@ export default function InstallationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <span>🔧</span> Instalaciones
         </h1>
@@ -323,8 +323,8 @@ export default function InstallationsPage() {
 
       {/* Search + Filters */}
       <div className="space-y-4">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1 max-w-md space-y-1">
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="w-full sm:flex-1 sm:max-w-md space-y-1">
             <Label className="text-xs flex items-center gap-1">
               <Search className="h-3 w-3" /> Buscar
             </Label>
@@ -362,7 +362,7 @@ export default function InstallationsPage() {
               type="date"
               value={filters.startDate}
               onChange={(e) => { onChange("startDate", e.target.value); setSelectedWeek(""); }}
-              className="w-[160px]"
+              className="w-full sm:w-[160px]"
               disabled={!!selectedWeek}
             />
           </div>
@@ -372,14 +372,14 @@ export default function InstallationsPage() {
               type="date"
               value={filters.endDate}
               onChange={(e) => { onChange("endDate", e.target.value); setSelectedWeek(""); }}
-              className="w-[160px]"
+              className="w-full sm:w-[160px]"
               disabled={!!selectedWeek}
             />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">👤 Vendedor</Label>
             <Select value={filters.seller || "all"} onValueChange={(v) => onChange("seller", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Todos" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Todos" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los Vendedores</SelectItem>
                 {filterOptions.sellers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -397,7 +397,7 @@ export default function InstallationsPage() {
           <div className="space-y-1">
             <Label className="text-xs">💱 Moneda</Label>
             <Select value={filters.currency || "all"} onValueChange={(v) => onChange("currency", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Todas" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder="Todas" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="USD">USD</SelectItem>
@@ -408,7 +408,7 @@ export default function InstallationsPage() {
           <div className="space-y-1">
             <Label className="text-xs">⚡ Tipo</Label>
             <Select value={filters.installationType || "all"} onValueChange={(v) => onChange("installationType", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="FREE">🆓 GRATIS</SelectItem>

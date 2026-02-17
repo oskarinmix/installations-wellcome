@@ -165,6 +165,7 @@ export default function SettingsPage() {
               <p className="text-sm">No hay planes configurados aún.</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -202,6 +203,7 @@ export default function SettingsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -322,6 +324,7 @@ export default function SettingsPage() {
               <p className="text-sm">No se encontraron usuarios.</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -354,6 +357,7 @@ export default function SettingsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

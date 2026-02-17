@@ -224,7 +224,7 @@ export default function SellersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <span>👥</span> Vendedores
         </h1>
@@ -296,6 +296,7 @@ export default function SellersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -372,6 +373,7 @@ export default function SellersPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}

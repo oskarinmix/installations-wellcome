@@ -216,7 +216,7 @@ export default function DashboardPage() {
                   <Bar dataKey="count" fill="#2563eb" name="Ventas" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-              <div className="mt-4 rounded-lg border overflow-hidden">
+              <div className="mt-4 rounded-lg border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-muted/50 text-left text-muted-foreground">

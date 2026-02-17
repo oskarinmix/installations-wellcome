@@ -183,6 +183,7 @@ export default function UploadPage() {
               {result.duplicates.length > 0 && (
                 <div className="p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20 space-y-2">
                   <p className="font-medium text-sm">⚠️ Filas duplicadas (eliminadas):</p>
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -207,6 +208,7 @@ export default function UploadPage() {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               )}
             </div>
@@ -227,6 +229,7 @@ export default function UploadPage() {
               <p className="text-sm">No hay cargas aún.</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -259,6 +262,7 @@ export default function UploadPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

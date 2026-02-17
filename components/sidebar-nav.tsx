@@ -16,6 +16,8 @@ import {
   Moon,
   Settings,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 
 const navItems = [
@@ -32,23 +34,35 @@ export function SidebarNav() {
   const { theme, setTheme } = useTheme();
   const { data: session } = authClient.useSession();
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     getCurrentUserRole().then((res) => setRole(res?.role ?? null));
   }, []);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   async function handleSignOut() {
     await authClient.signOut();
     router.push("/login");
   }
 
-  return (
-    <aside className="fixed inset-y-0 left-0 z-10 w-56 border-r bg-card flex flex-col">
+  const sidebarContent = (
+    <>
       <div className="flex h-14 items-center border-b px-4 gap-2">
         <span className="text-xl">📡</span>
         <Link href={role === "agent" ? "/installations" : "/dashboard"} className="font-bold text-lg bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
           Wellcomm
         </Link>
+        <button
+          className="ml-auto md:hidden p-1 rounded-md hover:bg-accent"
+          onClick={() => setMobileOpen(false)}
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
       <nav className="flex flex-col gap-1 p-3 flex-1">
         {navItems
@@ -106,6 +120,47 @@ export function SidebarNav() {
           Cerrar Sesión
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="fixed top-0 left-0 right-0 z-20 flex md:hidden h-14 items-center border-b bg-card px-4 gap-3">
+        <button
+          className="p-1.5 rounded-md hover:bg-accent"
+          onClick={() => setMobileOpen(true)}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <span className="text-xl">📡</span>
+        <Link href={role === "agent" ? "/installations" : "/dashboard"} className="font-bold text-lg bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+          Wellcomm
+        </Link>
+      </div>
+
+      {/* Mobile drawer backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 w-56 border-r bg-card flex flex-col transition-transform duration-200 md:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-10 w-56 border-r bg-card flex-col hidden md:flex">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
