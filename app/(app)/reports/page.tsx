@@ -72,7 +72,7 @@ export default function ReportsPage() {
         `${seller.name.replace(/[^a-zA-Z0-9_-]/g, "_")}_${selectedWeek.label.replace(/\s/g, "_")}.pdf`
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to generate report");
+      alert(err instanceof Error ? err.message : "Error al generar reporte");
     } finally {
       setPdfLoading(null);
     }
@@ -93,7 +93,7 @@ export default function ReportsPage() {
         `All_Sellers_${selectedWeek.label.replace(/\s/g, "_")}.pdf`
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to generate reports");
+      alert(err instanceof Error ? err.message : "Error al generar reportes");
     } finally {
       setZipLoading(false);
     }
@@ -102,12 +102,12 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold flex items-center gap-3">
-        <span>📊</span> Reports
+        <span>📊</span> Reportes
       </h1>
 
       <div className="flex flex-wrap gap-4 items-end">
         <div className="space-y-1">
-          <Label className="text-xs">📅 Week</Label>
+          <Label className="text-xs">📅 Semana</Label>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={selectedWeek?.start.toISOString() ?? ""}
@@ -116,7 +116,7 @@ export default function ReportsPage() {
               setSelectedWeek(week ?? null);
             }}
           >
-            <option value="">Select week...</option>
+            <option value="">Seleccionar semana...</option>
             {weeks.map((week) => (
               <option key={week.start.toISOString()} value={week.start.toISOString()}>
                 {week.label}
@@ -131,7 +131,7 @@ export default function ReportsPage() {
           className="gap-2"
         >
           {zipLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          {zipLoading ? "Generating..." : "Download All Reports (PDF)"}
+          {zipLoading ? "Generando..." : "Descargar Todos los Reportes (PDF)"}
         </Button>
       </div>
 
@@ -140,32 +140,32 @@ export default function ReportsPage() {
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             {loading
-              ? "Loading..."
+              ? "Cargando..."
               : sellers.length > 0
-                ? `${sellers.length} seller${sellers.length !== 1 ? "s" : ""} with sales`
-                : "No sellers with sales"}
+                ? `${sellers.length} vendedor${sellers.length !== 1 ? "es" : ""} con ventas`
+                : "Sin vendedores con ventas"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin mb-3" />
-              <p className="text-sm">Loading sellers...</p>
+              <p className="text-sm">Cargando vendedores...</p>
             </div>
           ) : sellers.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <span className="text-4xl mb-3">📭</span>
               <p className="text-sm">
-                {selectedWeek ? "No sellers have sales in this week." : "Select a week to see sellers."}
+                {selectedWeek ? "No hay vendedores con ventas esta semana." : "Selecciona una semana para ver vendedores."}
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Seller</TableHead>
-                  <TableHead className="text-center">Sales</TableHead>
-                  <TableHead className="w-32 text-center">Report</TableHead>
+                  <TableHead>Vendedor</TableHead>
+                  <TableHead className="text-center">Ventas</TableHead>
+                  <TableHead className="w-32 text-center">Reporte</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -67,7 +67,7 @@ export default function UploadPage() {
     const formData = new FormData(e.currentTarget);
     const file = formData.get("file") as File;
     if (!file || !file.name) {
-      setError("Please select a file");
+      setError("Por favor selecciona un archivo");
       return;
     }
 
@@ -78,7 +78,7 @@ export default function UploadPage() {
       await loadUploads();
       (e.target as HTMLFormElement).reset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Error al subir");
     } finally {
       setUploading(false);
     }
@@ -92,16 +92,16 @@ export default function UploadPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold flex items-center gap-3">
-        <span>📤</span> Upload Excel File
+        <span>📤</span> Subir Archivo Excel
       </h1>
 
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-green-600" />
-            Upload Monthly Report
+            Subir Reporte Mensual
           </CardTitle>
-          <CardDescription>Upload a .xlsx file with the monthly sales data</CardDescription>
+          <CardDescription>Sube un archivo .xlsx con los datos de ventas mensuales</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpload} className="flex items-center gap-4">
@@ -113,7 +113,7 @@ export default function UploadPage() {
             />
             <Button type="submit" disabled={uploading} className="gap-2">
               <Upload className="h-4 w-4" />
-              {uploading ? "Uploading..." : "Upload"}
+              {uploading ? "Subiendo..." : "Subir"}
             </Button>
           </form>
 
@@ -129,34 +129,34 @@ export default function UploadPage() {
               <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 space-y-1">
                 <p className="font-medium flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  Upload Complete
+                  Carga Completada
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2 text-sm">
                   <div className="rounded-md bg-background p-2 text-center border">
-                    <p className="text-muted-foreground text-xs">Total Rows</p>
+                    <p className="text-muted-foreground text-xs">Filas Totales</p>
                     <p className="font-bold">{result.totalRows}</p>
                   </div>
                   <div className="rounded-md bg-background p-2 text-center border">
-                    <p className="text-muted-foreground text-xs">✅ Valid</p>
+                    <p className="text-muted-foreground text-xs">✅ Válidas</p>
                     <p className="font-bold text-green-600">{result.validRows}</p>
                   </div>
                   <div className="rounded-md bg-background p-2 text-center border">
-                    <p className="text-muted-foreground text-xs">⏭️ Skipped</p>
+                    <p className="text-muted-foreground text-xs">⏭️ Omitidas</p>
                     <p className="font-bold text-orange-600">{result.skippedRows}</p>
                   </div>
                   <div className="rounded-md bg-background p-2 text-center border">
-                    <p className="text-muted-foreground text-xs">🔄 File Dups</p>
+                    <p className="text-muted-foreground text-xs">🔄 Dups Archivo</p>
                     <p className="font-bold text-yellow-600">{result.duplicateRows}</p>
                   </div>
                   <div className="rounded-md bg-background p-2 text-center border">
-                    <p className="text-muted-foreground text-xs">🗄️ DB Dups</p>
+                    <p className="text-muted-foreground text-xs">🗄️ Dups BD</p>
                     <p className="font-bold text-yellow-600">{result.dbDuplicates}</p>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 rounded-lg border bg-muted/30 space-y-2">
-                <p className="font-medium text-sm">🔍 Detected Excel Headers:</p>
+                <p className="font-medium text-sm">🔍 Encabezados Excel Detectados:</p>
                 <div className="flex flex-wrap gap-1">
                   {result.detectedHeaders?.map((h, i) => (
                     <span key={i} className="text-xs bg-background border rounded-full px-2.5 py-1">
@@ -164,7 +164,7 @@ export default function UploadPage() {
                     </span>
                   ))}
                 </div>
-                <p className="font-medium text-sm mt-2">🔗 Mapped Columns:</p>
+                <p className="font-medium text-sm mt-2">🔗 Columnas Mapeadas:</p>
                 <div className="flex flex-wrap gap-1">
                   {result.mappedColumns && Object.entries(result.mappedColumns).map(([key, idx]) => (
                     <span key={key} className="text-xs bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full px-2.5 py-1">
@@ -175,23 +175,23 @@ export default function UploadPage() {
                 {result.mappedColumns && !("medioPago" in result.mappedColumns) && (
                   <p className="text-sm text-destructive font-medium flex items-center gap-1">
                     <AlertTriangle className="h-3.5 w-3.5" />
-                    &quot;medioPago&quot; (payment method) was NOT detected! Check header name.
+                    &quot;medioPago&quot; (método de pago) NO fue detectado! Verifica el nombre del encabezado.
                   </p>
                 )}
               </div>
 
               {result.duplicates.length > 0 && (
                 <div className="p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20 space-y-2">
-                  <p className="font-medium text-sm">⚠️ Duplicate rows (removed):</p>
+                  <p className="font-medium text-sm">⚠️ Filas duplicadas (eliminadas):</p>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Row #</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Seller</TableHead>
+                        <TableHead>Fila #</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Vendedor</TableHead>
                         <TableHead>Plan</TableHead>
-                        <TableHead>Zone</TableHead>
+                        <TableHead>Zona</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -217,23 +217,23 @@ export default function UploadPage() {
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span>📂</span> Previous Uploads
+            <span>📂</span> Cargas Anteriores
           </CardTitle>
         </CardHeader>
         <CardContent>
           {uploads.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground">
               <span className="text-4xl mb-2">📭</span>
-              <p className="text-sm">No uploads yet.</p>
+              <p className="text-sm">No hay cargas aún.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>📄 File Name</TableHead>
-                  <TableHead>📅 Date</TableHead>
-                  <TableHead>🛒 Sales Count</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead>📄 Nombre de Archivo</TableHead>
+                  <TableHead>📅 Fecha</TableHead>
+                  <TableHead>🛒 Cantidad de Ventas</TableHead>
+                  <TableHead className="w-[100px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -252,7 +252,7 @@ export default function UploadPage() {
                         className="gap-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Delete
+                        Eliminar
                       </Button>
                     </TableCell>
                   </TableRow>

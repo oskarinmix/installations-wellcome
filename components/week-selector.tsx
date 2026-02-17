@@ -33,13 +33,13 @@ export function WeekSelector({ weeks, selectedWeek, onSelect }: WeekSelectorProp
   return (
     <div className="flex items-center gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground font-medium">Week</label>
+        <label className="text-xs text-muted-foreground font-medium">Semana</label>
         <select
           className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           value={selectedWeek?.start.toISOString() ?? ""}
           onChange={(e) => handleDropdownChange(e.target.value)}
         >
-          <option value="">All weeks</option>
+          <option value="">Todas las semanas</option>
           {weeks.map((week) => (
             <option key={week.start.toISOString()} value={week.start.toISOString()}>
               {week.label}
@@ -48,7 +48,7 @@ export function WeekSelector({ weeks, selectedWeek, onSelect }: WeekSelectorProp
         </select>
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground font-medium">Pick date (snaps to Sat-Fri)</label>
+        <label className="text-xs text-muted-foreground font-medium">Elegir fecha (ajusta a Sáb-Vie)</label>
         <input
           type="date"
           className="h-9 rounded-md border border-input bg-background px-3 text-sm"

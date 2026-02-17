@@ -34,7 +34,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message ?? "Failed to sign in");
+      setError(error.message ?? "Error al iniciar sesión");
       setLoading(false);
       return;
     }
@@ -55,8 +55,8 @@ export default function LoginPage() {
         <div className="flex justify-center mb-2">
           <span className="text-3xl">📡</span>
         </div>
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Sign in to your Wellcomm account</CardDescription>
+        <CardTitle className="text-2xl">Bienvenido</CardTitle>
+        <CardDescription>Inicia sesión en tu cuenta Wellcomm</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -66,7 +66,7 @@ export default function LoginPage() {
             </div>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Correo electrónico</Label>
             <Input
               id="email"
               type="email"
@@ -77,18 +77,18 @@ export default function LoginPage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Your password"
+              placeholder="Tu contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
         </form>
         <div className="relative my-4">
@@ -96,7 +96,7 @@ export default function LoginPage() {
             <div className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
+            <span className="bg-card px-2 text-muted-foreground">o</span>
           </div>
         </div>
         <Button
@@ -123,14 +123,14 @@ export default function LoginPage() {
               fill="#EA4335"
             />
           </svg>
-          Continue with Google
+          Continuar con Google
         </Button>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          ¿No tienes una cuenta?{" "}
           <Link href="/signup" className="text-primary hover:underline font-medium">
-            Sign up
+            Regístrate
           </Link>
         </p>
       </CardFooter>

@@ -84,7 +84,7 @@ export default function SettingsPage() {
       await updateUserRole(userId, newRole);
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update role");
+      alert(err instanceof Error ? err.message : "Error al actualizar rol");
     } finally {
       setRoleUpdating(null);
     }
@@ -117,7 +117,7 @@ export default function SettingsPage() {
       setDialogOpen(false);
       loadPlans();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save plan");
+      alert(err instanceof Error ? err.message : "Error al guardar plan");
     } finally {
       setSaving(false);
     }
@@ -131,7 +131,7 @@ export default function SettingsPage() {
       setDeleteTarget(null);
       loadPlans();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete plan");
+      alert(err instanceof Error ? err.message : "Error al eliminar plan");
     } finally {
       setDeleting(false);
     }
@@ -140,7 +140,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold flex items-center gap-3">
-        <span>⚙️</span> Settings
+        <span>⚙️</span> Configuración
       </h1>
 
       {/* Plans Section */}
@@ -149,29 +149,29 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Plans
+              Planes
             </CardTitle>
             <Button size="sm" className="gap-1" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> New Plan
+              <Plus className="h-4 w-4" /> Nuevo Plan
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">Loading...</div>
+            <div className="flex items-center justify-center py-8 text-muted-foreground">Cargando...</div>
           ) : plans.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground">
               <span className="text-4xl mb-3">📭</span>
-              <p className="text-sm">No plans configured yet.</p>
+              <p className="text-sm">No hay planes configurados aún.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-16">#</TableHead>
-                  <TableHead>Plan Name</TableHead>
-                  <TableHead className="text-right">Price (USD)</TableHead>
-                  <TableHead className="w-24 text-center">Actions</TableHead>
+                  <TableHead>Nombre del Plan</TableHead>
+                  <TableHead className="text-right">Precio (USD)</TableHead>
+                  <TableHead className="w-24 text-center">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,14 +183,14 @@ export default function SettingsPage() {
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
-                          title="Edit plan"
+                          title="Editar plan"
                           className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => openEdit(plan)}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          title="Delete plan"
+                          title="Eliminar plan"
                           className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-red-100 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
                           onClick={() => setDeleteTarget(plan)}
                         >
@@ -210,17 +210,17 @@ export default function SettingsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingPlan ? "Edit Plan" : "New Plan"}</DialogTitle>
+            <DialogTitle>{editingPlan ? "Editar Plan" : "Nuevo Plan"}</DialogTitle>
             <DialogDescription>
-              {editingPlan ? "Update the plan name and price." : "Add a new plan to the system."}
+              {editingPlan ? "Actualizar el nombre y precio del plan." : "Agregar un nuevo plan al sistema."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="planName">Plan Name</Label>
+              <Label htmlFor="planName">Nombre del Plan</Label>
               <Input
                 id="planName"
-                placeholder="e.g. RESIDENCIAL 400"
+                placeholder="ej. RESIDENCIAL 400"
                 value={planName}
                 onChange={(e) => setPlanName(e.target.value)}
                 required
@@ -228,7 +228,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="planPrice">Price (USD)</Label>
+              <Label htmlFor="planPrice">Precio (USD)</Label>
               <Input
                 id="planPrice"
                 type="number"
@@ -242,10 +242,10 @@ export default function SettingsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" disabled={saving || !planName.trim() || !planPrice}>
-                {saving ? "Saving..." : editingPlan ? "Save Changes" : "Create Plan"}
+                {saving ? "Guardando..." : editingPlan ? "Guardar Cambios" : "Crear Plan"}
               </Button>
             </DialogFooter>
           </form>
@@ -256,15 +256,15 @@ export default function SettingsPage() {
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete Plan</DialogTitle>
+            <DialogTitle>Eliminar Plan</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This cannot be undone.
+              ¿Estás seguro de que deseas eliminar <strong>{deleteTarget?.name}</strong>? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -276,29 +276,29 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Settings2 className="h-5 w-5" />
-              Commission Config
+              Configuración de Comisiones
             </CardTitle>
             <Button size="sm" className="gap-1" onClick={() => { setCommForm(commConfig); setCommDialogOpen(true); }}>
-              <Pencil className="h-4 w-4" /> Edit
+              <Pencil className="h-4 w-4" /> Editar
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg border p-4">
-              <p className="text-xs text-muted-foreground mb-1">Seller Free Commission</p>
+              <p className="text-xs text-muted-foreground mb-1">Comisión Vendedor Gratis</p>
               <p className="text-xl font-bold">${commConfig.sellerFreeCommission}</p>
             </div>
             <div className="rounded-lg border p-4">
-              <p className="text-xs text-muted-foreground mb-1">Seller Paid Commission</p>
+              <p className="text-xs text-muted-foreground mb-1">Comisión Vendedor Pagado</p>
               <p className="text-xl font-bold">${commConfig.sellerPaidCommission}</p>
             </div>
             <div className="rounded-lg border p-4">
-              <p className="text-xs text-muted-foreground mb-1">Installer Free %</p>
+              <p className="text-xs text-muted-foreground mb-1">% Instalador Gratis</p>
               <p className="text-xl font-bold">{(commConfig.installerFreePercentage * 100).toFixed(0)}%</p>
             </div>
             <div className="rounded-lg border p-4">
-              <p className="text-xs text-muted-foreground mb-1">Installer Paid %</p>
+              <p className="text-xs text-muted-foreground mb-1">% Instalador Pagado</p>
               <p className="text-xl font-bold">{(commConfig.installerPaidPercentage * 100).toFixed(0)}%</p>
             </div>
           </div>
@@ -310,24 +310,24 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Users
+            Usuarios
           </CardTitle>
         </CardHeader>
         <CardContent>
           {usersLoading ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">Loading...</div>
+            <div className="flex items-center justify-center py-8 text-muted-foreground">Cargando...</div>
           ) : users.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground">
               <span className="text-4xl mb-3">📭</span>
-              <p className="text-sm">No users found.</p>
+              <p className="text-sm">No se encontraron usuarios.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="w-40">Role</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Correo</TableHead>
+                  <TableHead className="w-40">Rol</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -362,8 +362,8 @@ export default function SettingsPage() {
       <Dialog open={commDialogOpen} onOpenChange={setCommDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Commission Config</DialogTitle>
-            <DialogDescription>Update commission values for sellers and installers.</DialogDescription>
+            <DialogTitle>Editar Configuración de Comisiones</DialogTitle>
+            <DialogDescription>Actualizar valores de comisión para vendedores e instaladores.</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={async (e) => {
@@ -374,7 +374,7 @@ export default function SettingsPage() {
                 setCommDialogOpen(false);
                 loadCommConfig();
               } catch (err) {
-                alert(err instanceof Error ? err.message : "Failed to save config");
+                alert(err instanceof Error ? err.message : "Error al guardar configuración");
               } finally {
                 setCommSaving(false);
               }
@@ -382,7 +382,7 @@ export default function SettingsPage() {
             className="space-y-4"
           >
             <div className="space-y-1">
-              <Label>Seller Free Commission ($)</Label>
+              <Label>Comisión Vendedor Gratis ($)</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -393,7 +393,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Seller Paid Commission ($)</Label>
+              <Label>Comisión Vendedor Pagado ($)</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -404,7 +404,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Installer Free Percentage (%)</Label>
+              <Label>Porcentaje Instalador Gratis (%)</Label>
               <Input
                 type="number"
                 step="1"
@@ -416,7 +416,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Installer Paid Percentage (%)</Label>
+              <Label>Porcentaje Instalador Pagado (%)</Label>
               <Input
                 type="number"
                 step="1"
@@ -428,9 +428,9 @@ export default function SettingsPage() {
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setCommDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" type="button" onClick={() => setCommDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={commSaving}>
-                {commSaving ? "Saving..." : "Save Changes"}
+                {commSaving ? "Guardando..." : "Guardar Cambios"}
               </Button>
             </DialogFooter>
           </form>

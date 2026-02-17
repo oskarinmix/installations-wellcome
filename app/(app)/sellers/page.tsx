@@ -216,7 +216,7 @@ export default function SellersPage() {
       setSellerDialogOpen(false);
       loadSellers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save seller");
+      alert(err instanceof Error ? err.message : "Error al guardar vendedor");
     } finally {
       setSellerSaving(false);
     }
@@ -226,11 +226,11 @@ export default function SellersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <span>👥</span> Sellers
+          <span>👥</span> Vendedores
         </h1>
         {role === "admin" && (
           <Button className="gap-1" onClick={openCreateSeller}>
-            <Plus className="h-4 w-4" /> New Seller
+            <Plus className="h-4 w-4" /> Nuevo Vendedor
           </Button>
         )}
       </div>
@@ -239,16 +239,16 @@ export default function SellersPage() {
       <div className="flex flex-wrap gap-4 items-end">
         <div className="flex-1 max-w-sm space-y-1">
           <Label className="text-xs flex items-center gap-1">
-            <Search className="h-3 w-3" /> Search
+            <Search className="h-3 w-3" /> Buscar
           </Label>
           <Input
-            placeholder="Search by name..."
+            placeholder="Buscar por nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="w-32 space-y-1">
-          <Label className="text-xs">📊 Min. Sales</Label>
+          <Label className="text-xs">📊 Ventas Mín.</Label>
           <Input
             type="number"
             min="0"
@@ -258,7 +258,7 @@ export default function SellersPage() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">📅 Week</Label>
+          <Label className="text-xs">📅 Semana</Label>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={selectedWeek?.start.toISOString() ?? ""}
@@ -267,7 +267,7 @@ export default function SellersPage() {
               setSelectedWeek(week ?? null);
             }}
           >
-            <option value="">Select week...</option>
+            <option value="">Seleccionar semana...</option>
             {weeks.map((week) => (
               <option key={week.start.toISOString()} value={week.start.toISOString()}>
                 {week.label}
@@ -280,19 +280,19 @@ export default function SellersPage() {
       {loading ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <span className="text-4xl mb-3 animate-pulse">⏳</span>
-          <p>Loading sellers...</p>
+          <p>Cargando vendedores...</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <span className="text-4xl mb-3">{sellers.length === 0 ? "📭" : "🔍"}</span>
-          <p>{sellers.length === 0 ? "No sellers found. Upload data first." : "No sellers match your filters."}</p>
+          <p>{sellers.length === 0 ? "No se encontraron vendedores. Sube datos primero." : "Ningún vendedor coincide con los filtros."}</p>
         </div>
       ) : (
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              {filtered.length} Seller{filtered.length !== 1 ? "s" : ""}
+              {filtered.length} Vendedor{filtered.length !== 1 ? "es" : ""}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -300,12 +300,12 @@ export default function SellersPage() {
               <TableHeader>
                 <TableRow>
                   <SortHead label="#" sortKey="id" current={sortKey} dir={sortDir} onSort={handleSort} className="w-16" />
-                  <SortHead label="👤 Seller Name" sortKey="sellerName" current={sortKey} dir={sortDir} onSort={handleSort} />
-                  <SortHead label="🛒 Total Sales" sortKey="totalSales" current={sortKey} dir={sortDir} onSort={handleSort} className="text-center" />
-                  <SortHead label="💵 Comm. USD" sortKey="commissionUSD" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
-                  <SortHead label="💰 Comm. BCV" sortKey="commissionBCV" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
-                  <SortHead label="📅 Last Active" sortKey="lastActive" current={sortKey} dir={sortDir} onSort={handleSort} />
-                  <TableHead className="w-20 text-center">📄 Report</TableHead>
+                  <SortHead label="👤 Nombre" sortKey="sellerName" current={sortKey} dir={sortDir} onSort={handleSort} />
+                  <SortHead label="🛒 Ventas" sortKey="totalSales" current={sortKey} dir={sortDir} onSort={handleSort} className="text-center" />
+                  <SortHead label="💵 Com. USD" sortKey="commissionUSD" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
+                  <SortHead label="💰 Com. BCV" sortKey="commissionBCV" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
+                  <SortHead label="📅 Última Act." sortKey="lastActive" current={sortKey} dir={sortDir} onSort={handleSort} />
+                  <TableHead className="w-20 text-center">📄 Reporte</TableHead>
                   {role === "admin" && <TableHead className="w-10" />}
                   <TableHead className="w-10" />
                 </TableRow>
@@ -328,7 +328,7 @@ export default function SellersPage() {
                     <TableCell className="text-right font-mono">${seller.commissionBCV.toFixed(2)}</TableCell>
                     <TableCell>
                       {seller.lastActive
-                        ? new Date(seller.lastActive).toLocaleDateString("en-US", {
+                        ? new Date(seller.lastActive).toLocaleDateString("es", {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
@@ -337,7 +337,7 @@ export default function SellersPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <button
-                        title={selectedWeek ? `View report for ${selectedWeek.label}` : "Select a week first"}
+                        title={selectedWeek ? `Ver reporte de ${selectedWeek.label}` : "Selecciona una semana primero"}
                         className={`inline-flex items-center justify-center rounded-md p-1.5 transition-colors ${
                           selectedWeek
                             ? "hover:bg-blue-100 dark:hover:bg-blue-950 text-blue-600 dark:text-blue-400"
@@ -354,7 +354,7 @@ export default function SellersPage() {
                     {role === "admin" && (
                       <TableCell>
                         <button
-                          title="Edit seller"
+                          title="Editar vendedor"
                           className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -385,16 +385,16 @@ export default function SellersPage() {
                 disabled={!prevSeller || reportLoading}
                 onClick={() => prevSeller && goToSeller(prevSeller.id)}
                 className="inline-flex items-center justify-center rounded-md p-1 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title={prevSeller ? `← ${prevSeller.sellerName}` : "No previous seller"}
+                title={prevSeller ? `← ${prevSeller.sellerName}` : "No hay vendedor anterior"}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <span className="flex-1">📊 {reportData?.sellerName ?? "Loading..."}</span>
+              <span className="flex-1">📊 {reportData?.sellerName ?? "Cargando..."}</span>
               <button
                 disabled={!nextSeller || reportLoading}
                 onClick={() => nextSeller && goToSeller(nextSeller.id)}
                 className="inline-flex items-center justify-center rounded-md p-1 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title={nextSeller ? `→ ${nextSeller.sellerName}` : "No next seller"}
+                title={nextSeller ? `→ ${nextSeller.sellerName}` : "No hay siguiente vendedor"}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -423,31 +423,31 @@ export default function SellersPage() {
           {reportLoading ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin mb-3" />
-              <p className="text-sm">Loading report...</p>
+              <p className="text-sm">Cargando reporte...</p>
             </div>
           ) : !reportData || reportData.totalSales === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <span className="text-4xl mb-3">📭</span>
-              <p className="text-sm">No sales for this seller in the selected week.</p>
+              <p className="text-sm">Sin ventas para este vendedor en la semana seleccionada.</p>
             </div>
           ) : (
             <div className="space-y-5 overflow-y-auto pr-1 flex-1 min-h-0">
               {/* Summary */}
               <div className="grid grid-cols-4 gap-2">
                 <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/20 p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">🛒 Sales</p>
+                  <p className="text-[10px] text-muted-foreground">🛒 Ventas</p>
                   <p className="text-xl font-bold">{reportData.totalSales}</p>
                 </div>
                 <div className="rounded-lg border bg-green-50 dark:bg-green-950/20 p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">🆓 Free</p>
+                  <p className="text-[10px] text-muted-foreground">🆓 Gratis</p>
                   <p className="text-xl font-bold text-green-700 dark:text-green-400">{reportData.freeCount}</p>
                 </div>
                 <div className="rounded-lg border bg-purple-50 dark:bg-purple-950/20 p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">💳 Paid</p>
+                  <p className="text-[10px] text-muted-foreground">💳 Pagadas</p>
                   <p className="text-xl font-bold text-purple-700 dark:text-purple-400">{reportData.paidCount}</p>
                 </div>
                 <div className="rounded-lg border bg-amber-50 dark:bg-amber-950/20 p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">🤝 Comm.</p>
+                  <p className="text-[10px] text-muted-foreground">🤝 Com.</p>
                   <p className="text-sm font-bold leading-tight mt-0.5">
                     ${reportData.commissionUSD.toFixed(2)} <span className="text-muted-foreground text-[10px]">USD</span>
                   </p>
@@ -460,11 +460,11 @@ export default function SellersPage() {
               {/* Revenue row */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-lg border p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">💵 Revenue USD</p>
+                  <p className="text-[10px] text-muted-foreground">💵 Ingresos USD</p>
                   <p className="text-lg font-bold">${reportData.revenueUSD.toFixed(2)}</p>
                 </div>
                 <div className="rounded-lg border p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">💰 Revenue BCV</p>
+                  <p className="text-[10px] text-muted-foreground">💰 Ingresos BCV</p>
                   <p className="text-lg font-bold">${reportData.revenueBCV.toFixed(2)}</p>
                 </div>
               </div>
@@ -474,7 +474,7 @@ export default function SellersPage() {
                 <div className="grid grid-cols-2 gap-3">
                   {reportData.byPlan.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold mb-1.5">📋 By Plan</h4>
+                      <h4 className="text-xs font-semibold mb-1.5">📋 Por Plan</h4>
                       <div className="rounded-lg border overflow-hidden">
                         <Table>
                           <TableBody>
@@ -491,7 +491,7 @@ export default function SellersPage() {
                   )}
                   {reportData.byZone.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold mb-1.5">📍 By Zone</h4>
+                      <h4 className="text-xs font-semibold mb-1.5">📍 Por Zona</h4>
                       <div className="rounded-lg border overflow-hidden">
                         <Table>
                           <TableBody>
@@ -511,25 +511,25 @@ export default function SellersPage() {
 
               {/* Transactions */}
               <div>
-                <h4 className="text-xs font-semibold mb-1.5">📝 Transactions ({reportData.transactions.length})</h4>
+                <h4 className="text-xs font-semibold mb-1.5">📝 Transacciones ({reportData.transactions.length})</h4>
                 <div className="rounded-lg border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50 text-[11px]">
-                        <TableHead className="py-1.5 px-2">Date</TableHead>
-                        <TableHead className="py-1.5 px-2">Customer</TableHead>
+                        <TableHead className="py-1.5 px-2">Fecha</TableHead>
+                        <TableHead className="py-1.5 px-2">Cliente</TableHead>
                         <TableHead className="py-1.5 px-2">Plan</TableHead>
-                        <TableHead className="py-1.5 px-2">Type</TableHead>
-                        <TableHead className="py-1.5 px-2 text-right">Amount</TableHead>
-                        <TableHead className="py-1.5 px-2 text-right">Comm.</TableHead>
-                        <TableHead className="py-1.5 px-2">Pay</TableHead>
+                        <TableHead className="py-1.5 px-2">Tipo</TableHead>
+                        <TableHead className="py-1.5 px-2 text-right">Monto</TableHead>
+                        <TableHead className="py-1.5 px-2 text-right">Com.</TableHead>
+                        <TableHead className="py-1.5 px-2">Pago</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {reportData.transactions.map((tx) => (
                         <TableRow key={tx.id} className="text-xs">
                           <TableCell className="py-1.5 px-2 whitespace-nowrap">
-                            {new Date(tx.transactionDate).toLocaleDateString("en-US", {
+                            {new Date(tx.transactionDate).toLocaleDateString("es", {
                               month: "short", day: "numeric",
                             })}
                           </TableCell>
@@ -554,7 +554,7 @@ export default function SellersPage() {
 
           <DialogFooter className="pt-3 border-t">
             <Button variant="outline" size="sm" onClick={() => setReportOpen(false)}>
-              Close
+              Cerrar
             </Button>
             <Button
               size="sm"
@@ -563,7 +563,7 @@ export default function SellersPage() {
               className="gap-1.5"
             >
               {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-              {pdfLoading ? "Generating..." : "📥 Download PDF"}
+              {pdfLoading ? "Generando..." : "📥 Descargar PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -573,17 +573,17 @@ export default function SellersPage() {
       <Dialog open={sellerDialogOpen} onOpenChange={setSellerDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingSeller ? "Edit Seller" : "New Seller"}</DialogTitle>
+            <DialogTitle>{editingSeller ? "Editar Vendedor" : "Nuevo Vendedor"}</DialogTitle>
             <DialogDescription>
-              {editingSeller ? "Update the seller's name." : "Add a new seller to the system."}
+              {editingSeller ? "Actualizar el nombre del vendedor." : "Agregar un nuevo vendedor al sistema."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveSeller} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="sellerName">Seller Name</Label>
+              <Label htmlFor="sellerName">Nombre del Vendedor</Label>
               <Input
                 id="sellerName"
-                placeholder="Enter seller name"
+                placeholder="Ingresa el nombre del vendedor"
                 value={sellerName}
                 onChange={(e) => setSellerName(e.target.value)}
                 required
@@ -591,7 +591,7 @@ export default function SellersPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="sellerPin">PIN (4 digits)</Label>
+              <Label htmlFor="sellerPin">PIN (4 dígitos)</Label>
               <Input
                 id="sellerPin"
                 type="password"
@@ -602,15 +602,15 @@ export default function SellersPage() {
                 inputMode="numeric"
               />
               <p className="text-xs text-muted-foreground">
-                Used by the seller to access the public consult page.
+                Usado por el vendedor para acceder a la página de consulta pública.
               </p>
             </div>
             <DialogFooter>
               <Button variant="outline" type="button" onClick={() => setSellerDialogOpen(false)}>
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" disabled={sellerSaving || !sellerName.trim()}>
-                {sellerSaving ? "Saving..." : editingSeller ? "Save Changes" : "Create Seller"}
+                {sellerSaving ? "Guardando..." : editingSeller ? "Guardar Cambios" : "Crear Vendedor"}
               </Button>
             </DialogFooter>
           </form>

@@ -69,14 +69,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold flex items-center gap-3">
-        <span>📊</span> Dashboard
+        <span>📊</span> Panel
       </h1>
 
       {/* Week selector + filters */}
       <div className="space-y-4">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="space-y-1">
-            <Label className="text-xs">📅 Week</Label>
+            <Label className="text-xs">📅 Semana</Label>
             <select
               className="h-9 rounded-md border border-input bg-background px-3 text-sm"
               value={selectedWeek}
@@ -87,7 +87,7 @@ export default function DashboardPage() {
                 }
               }}
             >
-              <option value="">All weeks</option>
+              <option value="">Todas las semanas</option>
               {weeks.map((week) => (
                 <option key={week.start.toISOString()} value={week.start.toISOString()}>
                   {week.label}
@@ -113,32 +113,32 @@ export default function DashboardPage() {
       {!data ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <span className="text-5xl mb-4">📁</span>
-          <p className="text-lg">Loading dashboard data...</p>
+          <p className="text-lg">Cargando datos del panel...</p>
         </div>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <KpiCard title="Total Sales" value={data.totalSales} icon="🛒" />
-            <KpiCard title="Revenue USD" value={`$${data.totalRevenueUSD.toFixed(2)}`} icon="💵" />
-            <KpiCard title="Revenue BCV" value={`$${data.totalRevenueBCV.toFixed(2)}`} icon="💰" />
+            <KpiCard title="Ventas Totales" value={data.totalSales} icon="🛒" />
+            <KpiCard title="Ingresos USD" value={`$${data.totalRevenueUSD.toFixed(2)}`} icon="💵" />
+            <KpiCard title="Ingresos BCV" value={`$${data.totalRevenueBCV.toFixed(2)}`} icon="💰" />
             <KpiCard
-              title="Seller Commissions"
+              title="Comisiones Vendedor"
               value={`$${data.totalSellerCommissionUSD.toFixed(2)} / $${data.totalSellerCommissionBCV.toFixed(2)}`}
               icon="🤝"
             />
             <KpiCard
-              title="Installer Commission"
+              title="Comisión Instalador"
               value={`$${data.totalInstallerCommissionUSD.toFixed(2)} / $${data.totalInstallerCommissionBCV.toFixed(2)}`}
               icon="🔧"
             />
-            <KpiCard title="Free Installations" value={data.freeCount} icon="🆓" />
-            <KpiCard title="Paid Installations" value={data.paidCount} icon="💳" />
+            <KpiCard title="Instalaciones Gratis" value={data.freeCount} icon="🆓" />
+            <KpiCard title="Instalaciones Pagadas" value={data.paidCount} icon="💳" />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border bg-card p-5 shadow-sm">
               <h3 className="mb-4 font-semibold flex items-center gap-2">
-                <span>👤</span> Sales by Seller
+                <span>👤</span> Ventas por Vendedor
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={data.salesBySeller}>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
 
             <div className="rounded-xl border bg-card p-5 shadow-sm">
               <h3 className="mb-4 font-semibold flex items-center gap-2">
-                <span>📍</span> Sales by Zone
+                <span>📍</span> Ventas por Zona
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={data.salesByZone}>
@@ -168,7 +168,7 @@ export default function DashboardPage() {
 
             <div className="rounded-xl border bg-card p-5 shadow-sm">
               <h3 className="mb-4 font-semibold flex items-center gap-2">
-                <span>💱</span> Revenue by Currency
+                <span>💱</span> Ingresos por Moneda
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
 
             <div className="rounded-xl border bg-card p-5 shadow-sm">
               <h3 className="mb-4 font-semibold flex items-center gap-2">
-                <span>⚡</span> Free vs Paid
+                <span>⚡</span> Gratis vs Pagadas
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
           {data.salesByPlan && data.salesByPlan.length > 0 && (
             <div className="rounded-xl border bg-card p-5 shadow-sm">
               <h3 className="mb-4 font-semibold flex items-center gap-2">
-                <span>📋</span> Sales by Plan
+                <span>📋</span> Ventas por Plan
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={data.salesByPlan} layout="vertical" margin={{ left: 120 }}>
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={110} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="count" fill="#2563eb" name="Sales" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="#2563eb" name="Ventas" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <div className="mt-4 rounded-lg border overflow-hidden">
@@ -221,9 +221,9 @@ export default function DashboardPage() {
                   <thead>
                     <tr className="bg-muted/50 text-left text-muted-foreground">
                       <th className="p-3">📋 Plan</th>
-                      <th className="p-3 text-center">🛒 Sales</th>
-                      <th className="p-3 text-right">💰 Revenue</th>
-                      <th className="p-3 text-right">🏷️ Expected Price</th>
+                      <th className="p-3 text-center">🛒 Ventas</th>
+                      <th className="p-3 text-right">💰 Ingresos</th>
+                      <th className="p-3 text-right">🏷️ Precio Esperado</th>
                     </tr>
                   </thead>
                   <tbody>

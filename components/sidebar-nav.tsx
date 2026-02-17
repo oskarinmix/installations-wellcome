@@ -19,11 +19,11 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: true },
-  { href: "/installations", label: "Installations", icon: Wrench },
-  { href: "/sellers", label: "Sellers", icon: Users, adminOnly: true },
-  { href: "/reports", label: "Reports", icon: FileText, adminOnly: true },
-  { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard, adminOnly: true },
+  { href: "/installations", label: "Instalaciones", icon: Wrench },
+  { href: "/sellers", label: "Vendedores", icon: Users, adminOnly: true },
+  { href: "/reports", label: "Reportes", icon: FileText, adminOnly: true },
+  { href: "/settings", label: "Configuración", icon: Settings, adminOnly: true },
 ];
 
 export function SidebarNav() {
@@ -95,15 +95,15 @@ export function SidebarNav() {
         >
           <Sun className="h-4 w-4 hidden dark:block" />
           <Moon className="h-4 w-4 block dark:hidden" />
-          <span className="dark:hidden">Dark Mode</span>
-          <span className="hidden dark:inline">Light Mode</span>
+          <span className="dark:hidden">Modo Oscuro</span>
+          <span className="hidden dark:inline">Modo Claro</span>
         </button>
         <button
           onClick={handleSignOut}
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-accent text-muted-foreground hover:text-foreground w-full"
         >
           <LogOut className="h-4 w-4" />
-          Sign Out
+          Cerrar Sesión
         </button>
       </div>
     </aside>

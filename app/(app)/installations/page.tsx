@@ -234,7 +234,7 @@ export default function InstallationsPage() {
       loadData();
       getGlobalFilterOptions().then(setFilterOptions);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete installation");
+      alert(err instanceof Error ? err.message : "Error al eliminar la instalación");
     } finally {
       setDeleting(false);
     }
@@ -271,7 +271,7 @@ export default function InstallationsPage() {
       loadData();
       getGlobalFilterOptions().then(setFilterOptions);
     } catch (err) {
-      alert(err instanceof Error ? err.message : editingId ? "Failed to update installation" : "Failed to create installation");
+      alert(err instanceof Error ? err.message : editingId ? "Error al actualizar la instalación" : "Error al crear la instalación");
     } finally {
       setSubmitting(false);
     }
@@ -281,40 +281,40 @@ export default function InstallationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <span>🔧</span> Installations
+          <span>🔧</span> Instalaciones
         </h1>
         <Button className="gap-1" onClick={handleOpenDialog}>
-          <Plus className="h-4 w-4" /> New
+          <Plus className="h-4 w-4" /> Nueva
         </Button>
       </div>
 
       {/* Summary Cards */}
-      {!loading && data.length > 0 && (
+      {role === "admin" && !loading && data.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/20 p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Total</p>
+            <p className="text-[10px] text-muted-foreground">Totales</p>
             <p className="text-2xl font-bold">{summary.total}</p>
           </div>
           <div className="rounded-lg border bg-green-50 dark:bg-green-950/20 p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Free</p>
+            <p className="text-[10px] text-muted-foreground">Gratis</p>
             <p className="text-2xl font-bold text-green-700 dark:text-green-400">{summary.free}</p>
           </div>
           <div className="rounded-lg border bg-purple-50 dark:bg-purple-950/20 p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Paid</p>
+            <p className="text-[10px] text-muted-foreground">Pagadas</p>
             <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">{summary.paid}</p>
           </div>
           <div className="rounded-lg border p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Revenue</p>
+            <p className="text-[10px] text-muted-foreground">Ingresos</p>
             <p className="text-sm font-bold">${summary.revenueUSD.toFixed(2)} <span className="text-[10px] text-muted-foreground">USD</span></p>
             <p className="text-sm font-bold">${summary.revenueBCV.toFixed(2)} <span className="text-[10px] text-muted-foreground">BCV</span></p>
           </div>
           <div className="rounded-lg border bg-amber-50 dark:bg-amber-950/20 p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Seller Comm.</p>
+            <p className="text-[10px] text-muted-foreground">Com. Vendedor</p>
             <p className="text-sm font-bold">${summary.commUSD.toFixed(2)} <span className="text-[10px] text-muted-foreground">USD</span></p>
             <p className="text-sm font-bold">${summary.commBCV.toFixed(2)} <span className="text-[10px] text-muted-foreground">BCV</span></p>
           </div>
           <div className="rounded-lg border bg-orange-50 dark:bg-orange-950/20 p-3 text-center">
-            <p className="text-[10px] text-muted-foreground">Installer Comm.</p>
+            <p className="text-[10px] text-muted-foreground">Com. Instalador</p>
             <p className="text-sm font-bold">${summary.instCommUSD.toFixed(2)} <span className="text-[10px] text-muted-foreground">USD</span></p>
             <p className="text-sm font-bold">${summary.instCommBCV.toFixed(2)} <span className="text-[10px] text-muted-foreground">BCV</span></p>
           </div>
@@ -326,10 +326,10 @@ export default function InstallationsPage() {
         <div className="flex gap-3 items-end">
           <div className="flex-1 max-w-md space-y-1">
             <Label className="text-xs flex items-center gap-1">
-              <Search className="h-3 w-3" /> Search
+              <Search className="h-3 w-3" /> Buscar
             </Label>
             <Input
-              placeholder="Search by customer, seller, zone, plan, reference..."
+              placeholder="Buscar por cliente, vendedor, zona, plan, referencia..."
               value={filters.search}
               onChange={(e) => onChange("search", e.target.value)}
             />
@@ -337,7 +337,7 @@ export default function InstallationsPage() {
         </div>
         <div className="flex flex-wrap gap-4 items-end">
           <div className="space-y-1">
-            <Label className="text-xs">📅 Week</Label>
+            <Label className="text-xs">📅 Semana</Label>
             <select
               className="h-9 rounded-md border border-input bg-background px-3 text-sm"
               value={selectedWeek}
@@ -348,7 +348,7 @@ export default function InstallationsPage() {
                 }
               }}
             >
-              <option value="">All weeks</option>
+              <option value="">Todas las semanas</option>
               {weeks.map((week) => (
                 <option key={week.start.toISOString()} value={week.start.toISOString()}>
                   {week.label}
@@ -357,7 +357,7 @@ export default function InstallationsPage() {
             </select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">📅 Start Date</Label>
+            <Label className="text-xs">📅 Fecha Inicio</Label>
             <Input
               type="date"
               value={filters.startDate}
@@ -367,7 +367,7 @@ export default function InstallationsPage() {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">📅 End Date</Label>
+            <Label className="text-xs">📅 Fecha Fin</Label>
             <Input
               type="date"
               value={filters.endDate}
@@ -377,17 +377,17 @@ export default function InstallationsPage() {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">👤 Seller</Label>
+            <Label className="text-xs">👤 Vendedor</Label>
             <Select value={filters.seller || "all"} onValueChange={(v) => onChange("seller", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Sellers" /></SelectTrigger>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Todos" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Sellers</SelectItem>
+                <SelectItem value="all">Todos los Vendedores</SelectItem>
                 {filterOptions.sellers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">📍 Zone</Label>
+            <Label className="text-xs">📍 Zona</Label>
             <MultiSelect
               options={filterOptions.zones}
               value={filters.zones}
@@ -395,29 +395,29 @@ export default function InstallationsPage() {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">💱 Currency</Label>
+            <Label className="text-xs">💱 Moneda</Label>
             <Select value={filters.currency || "all"} onValueChange={(v) => onChange("currency", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[130px]"><SelectValue placeholder="All" /></SelectTrigger>
+              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Todas" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="USD">USD</SelectItem>
                 <SelectItem value="BCV">BCV</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">⚡ Type</Label>
+            <Label className="text-xs">⚡ Tipo</Label>
             <Select value={filters.installationType || "all"} onValueChange={(v) => onChange("installationType", v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[130px]"><SelectValue placeholder="All" /></SelectTrigger>
+              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="FREE">🆓 FREE</SelectItem>
-                <SelectItem value="PAID">💳 PAID</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="FREE">🆓 GRATIS</SelectItem>
+                <SelectItem value="PAID">💳 PAGADA</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button variant="outline" size="sm" onClick={() => { setFilters({ ...emptyFilters, zones: [] }); setSelectedWeek(""); }} className="gap-1">
-            <X className="h-3.5 w-3.5" /> Clear
+            <X className="h-3.5 w-3.5" /> Limpiar
           </Button>
         </div>
       </div>
@@ -427,40 +427,40 @@ export default function InstallationsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5" />
-            {loading ? "Loading..." : `${sorted.length} record${sorted.length !== 1 ? "s" : ""}`}
+            {loading ? "Cargando..." : `${sorted.length} registro${sorted.length !== 1 ? "s" : ""}`}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {!loading && sorted.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <span className="text-4xl mb-3">📭</span>
-              <p className="text-sm">No installations found.</p>
+              <p className="text-sm">No se encontraron instalaciones.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableHead label="📅 Date" sortKey="transactionDate" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="👤 Customer" sortKey="customerName" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="🤝 Seller" sortKey="sellerName" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="📍 Zone" sortKey="zone" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="📅 Fecha" sortKey="transactionDate" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="👤 Cliente" sortKey="customerName" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="🤝 Vendedor" sortKey="sellerName" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="📍 Zona" sortKey="zone" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
                     <SortableHead label="📋 Plan" sortKey="plan" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="⚡ Type" sortKey="installationType" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="💳 Payment" sortKey="paymentMethod" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="💱 Currency" sortKey="currency" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
-                    <SortableHead label="💰 Amount" sortKey="subscriptionAmount" currentKey={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
-                    <TableHead>🤝 Seller Comm.</TableHead>
-                    <TableHead>🔧 Inst. Comm.</TableHead>
-                    <TableHead>🔗 Reference</TableHead>
-                    {role === "admin" && <TableHead className="w-20 text-center">Actions</TableHead>}
+                    <SortableHead label="⚡ Tipo" sortKey="installationType" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="💳 Pago" sortKey="paymentMethod" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="💱 Moneda" sortKey="currency" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                    <SortableHead label="💰 Monto" sortKey="subscriptionAmount" currentKey={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
+                    <TableHead>🤝 Com. Vendedor</TableHead>
+                    <TableHead>🔧 Com. Instalador</TableHead>
+                    <TableHead>🔗 Referencia</TableHead>
+                    {role === "admin" && <TableHead className="w-20 text-center">Acciones</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sorted.map((row) => (
                     <TableRow key={row.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="whitespace-nowrap">
-                        {new Date(row.transactionDate).toLocaleDateString("en-US", {
+                        {new Date(row.transactionDate).toLocaleDateString("es", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
@@ -476,7 +476,7 @@ export default function InstallationsPage() {
                       <TableCell>{row.plan}</TableCell>
                       <TableCell>
                         <Badge variant={row.installationType === "FREE" ? "secondary" : "default"}>
-                          {row.installationType === "FREE" ? "🆓 FREE" : "💳 PAID"}
+                          {row.installationType === "FREE" ? "🆓 GRATIS" : "💳 PAGADA"}
                         </Badge>
                       </TableCell>
                       <TableCell>{row.paymentMethod || "—"}</TableCell>
@@ -489,14 +489,14 @@ export default function InstallationsPage() {
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button
-                              title="Edit installation"
+                              title="Editar instalación"
                               className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
                               onClick={() => handleOpenEdit(row)}
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
-                              title="Delete installation"
+                              title="Eliminar instalación"
                               className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-red-100 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
                               onClick={() => setDeleteTarget(row)}
                             >
@@ -518,16 +518,16 @@ export default function InstallationsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Installation" : "New Installation"}</DialogTitle>
-            <DialogDescription>{editingId ? "Update the installation record." : "Create a new installation record."}</DialogDescription>
+            <DialogTitle>{editingId ? "Editar Instalación" : "Nueva Instalación"}</DialogTitle>
+            <DialogDescription>{editingId ? "Actualizar el registro de instalación." : "Crear un nuevo registro de instalación."}</DialogDescription>
           </DialogHeader>
 
           {dialogLoading ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">Loading...</div>
+            <div className="flex items-center justify-center py-8 text-muted-foreground">Cargando...</div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
-                <Label>Date</Label>
+                <Label>Fecha</Label>
                 <Input
                   type="date"
                   value={form.transactionDate}
@@ -537,9 +537,9 @@ export default function InstallationsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label>Customer Name</Label>
+                <Label>Nombre del Cliente</Label>
                 <Input
-                  placeholder="Customer name"
+                  placeholder="Nombre del cliente"
                   value={form.customerName}
                   onChange={(e) => set("customerName", e.target.value)}
                   required
@@ -547,33 +547,33 @@ export default function InstallationsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label>Seller</Label>
+                <Label>Vendedor</Label>
                 <Combobox
                   options={sellers.map((s) => ({ value: String(s.id), label: s.sellerName }))}
                   value={form.sellerId}
                   onValueChange={(v) => set("sellerId", v)}
-                  placeholder="Select a seller"
-                  searchPlaceholder="Search sellers..."
-                  emptyMessage="No sellers found."
+                  placeholder="Seleccionar vendedor"
+                  searchPlaceholder="Buscar vendedores..."
+                  emptyMessage="No se encontraron vendedores."
                 />
               </div>
 
               <div className="space-y-1">
-                <Label>Zone</Label>
+                <Label>Zona</Label>
                 <Combobox
                   options={[
                     ...zoneOptions.map((z) => ({ value: z, label: z })),
-                    { value: "__custom", label: "+ New zone..." },
+                    { value: "__custom", label: "+ Nueva zona..." },
                   ]}
                   value={form.zone}
                   onValueChange={(v) => set("zone", v)}
-                  placeholder="Select a zone"
-                  searchPlaceholder="Search zones..."
-                  emptyMessage="No zones found."
+                  placeholder="Seleccionar zona"
+                  searchPlaceholder="Buscar zonas..."
+                  emptyMessage="No se encontraron zonas."
                 />
                 {form.zone === "__custom" && (
                   <Input
-                    placeholder="Enter new zone name"
+                    placeholder="Nombre de la nueva zona"
                     value={form.customZone}
                     onChange={(e) => set("customZone", e.target.value)}
                     required
@@ -585,7 +585,7 @@ export default function InstallationsPage() {
               <div className="space-y-1">
                 <Label>Plan</Label>
                 <Select value={form.planId} onValueChange={(v) => set("planId", v)} required>
-                  <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar plan" /></SelectTrigger>
                   <SelectContent>
                     {plans.map((p) => (
                       <SelectItem key={p.id} value={String(p.id)}>
@@ -596,13 +596,13 @@ export default function InstallationsPage() {
                 </Select>
                 {selectedPlan && selectedPlan.price > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Plan price: ${selectedPlan.price.toFixed(2)}
+                    Precio del plan: ${selectedPlan.price.toFixed(2)}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <Label>Type</Label>
+                <Label>Tipo</Label>
                 <Select value={form.installationType} onValueChange={(v) => set("installationType", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -613,9 +613,9 @@ export default function InstallationsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label>Payment Method</Label>
+                <Label>Método de Pago</Label>
                 <Select value={form.paymentMethod} onValueChange={(v) => set("paymentMethod", v)} required>
-                  <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar método de pago" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ZELLE">ZELLE</SelectItem>
                     <SelectItem value="EFECTIVO">EFECTIVO</SelectItem>
@@ -627,16 +627,16 @@ export default function InstallationsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label>Reference Code (optional)</Label>
+                <Label>Código de Referencia (opcional)</Label>
                 <Input
-                  placeholder="Reference code"
+                  placeholder="Código de referencia"
                   value={form.referenceCode}
                   onChange={(e) => set("referenceCode", e.target.value)}
                 />
               </div>
 
               <Button type="submit" disabled={submitting} className="w-full">
-                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create Installation"}
+                {submitting ? "Guardando..." : editingId ? "Guardar Cambios" : "Crear Instalación"}
               </Button>
             </form>
           )}
@@ -647,15 +647,15 @@ export default function InstallationsPage() {
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete Installation</DialogTitle>
+            <DialogTitle>Eliminar Instalación</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the installation for <strong>{deleteTarget?.customerName}</strong>? This cannot be undone.
+              ¿Estás seguro de que deseas eliminar la instalación de <strong>{deleteTarget?.customerName}</strong>? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>

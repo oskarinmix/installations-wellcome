@@ -63,7 +63,7 @@ export default function InstallersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <span>🔧</span> Installer Report
+          <span>🔧</span> Reporte del Instalador
         </h1>
         <UploadSelector uploads={uploads} selectedId={selectedUpload} onSelect={setSelectedUpload} />
       </div>
@@ -79,15 +79,15 @@ export default function InstallersPage() {
       {!data ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <span className="text-5xl mb-4">📁</span>
-          <p className="text-lg">Select an upload to view the installer report.</p>
+          <p className="text-lg">Selecciona una carga para ver el reporte del instalador.</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <KpiCard title="Total Installations" value={data.totalInstallations} icon="🔧" />
-          <KpiCard title="Free Installations" value={data.freeInstallations} icon="🆓" />
-          <KpiCard title="Paid Installations" value={data.paidInstallations} icon="💳" />
-          <KpiCard title="Installer Commission USD" value={`$${data.commissionUSD.toFixed(2)}`} icon="💵" />
-          <KpiCard title="Installer Commission BCV" value={`$${data.commissionBCV.toFixed(2)}`} icon="💰" />
+          <KpiCard title="Instalaciones Totales" value={data.totalInstallations} icon="🔧" />
+          <KpiCard title="Instalaciones Gratis" value={data.freeInstallations} icon="🆓" />
+          <KpiCard title="Instalaciones Pagadas" value={data.paidInstallations} icon="💳" />
+          <KpiCard title="Comisión Instalador USD" value={`$${data.commissionUSD.toFixed(2)}`} icon="💵" />
+          <KpiCard title="Comisión Instalador BCV" value={`$${data.commissionBCV.toFixed(2)}`} icon="💰" />
         </div>
       )}
     </div>

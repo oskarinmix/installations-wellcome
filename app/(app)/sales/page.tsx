@@ -68,7 +68,7 @@ export default function SalesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <span>🧾</span> Sales Detail
+          <span>🧾</span> Detalle de Ventas
         </h1>
         <UploadSelector uploads={uploads} selectedId={selectedUpload} onSelect={setSelectedUpload} />
       </div>
@@ -85,38 +85,38 @@ export default function SalesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
-            Sales ({sales.length} records)
+            Ventas ({sales.length} registros)
           </CardTitle>
         </CardHeader>
         <CardContent>
           {sales.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <span className="text-4xl mb-3">📭</span>
-              <p className="text-sm">No sales data available.</p>
+              <p className="text-sm">No hay datos de ventas disponibles.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>📅 Date</TableHead>
-                    <TableHead>👤 Customer</TableHead>
-                    <TableHead>🤝 Seller</TableHead>
-                    <TableHead>📍 Zone</TableHead>
+                    <TableHead>📅 Fecha</TableHead>
+                    <TableHead>👤 Cliente</TableHead>
+                    <TableHead>🤝 Vendedor</TableHead>
+                    <TableHead>📍 Zona</TableHead>
                     <TableHead>📋 Plan</TableHead>
-                    <TableHead className="text-right">🏷️ Plan Price</TableHead>
-                    <TableHead>⚡ Type</TableHead>
-                    <TableHead>💱 Currency</TableHead>
-                    <TableHead className="text-right">💰 Amount</TableHead>
-                    <TableHead>💳 Payment</TableHead>
-                    <TableHead>🔗 Reference</TableHead>
+                    <TableHead className="text-right">🏷️ Precio Plan</TableHead>
+                    <TableHead>⚡ Tipo</TableHead>
+                    <TableHead>💱 Moneda</TableHead>
+                    <TableHead className="text-right">💰 Monto</TableHead>
+                    <TableHead>💳 Pago</TableHead>
+                    <TableHead>🔗 Referencia</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sales.map((sale) => (
                     <TableRow key={sale.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="whitespace-nowrap">
-                        {new Date(sale.transactionDate).toLocaleDateString("en-US", {
+                        {new Date(sale.transactionDate).toLocaleDateString("es", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
@@ -131,7 +131,7 @@ export default function SalesPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={sale.installationType === "FREE" ? "secondary" : "default"}>
-                          {sale.installationType === "FREE" ? "🆓 FREE" : "💳 PAID"}
+                          {sale.installationType === "FREE" ? "🆓 GRATIS" : "💳 PAGADA"}
                         </Badge>
                       </TableCell>
                       <TableCell>{sale.currency}</TableCell>

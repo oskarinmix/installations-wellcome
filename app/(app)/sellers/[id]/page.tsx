@@ -96,10 +96,10 @@ export default function SellerDetailPage() {
           href="/sellers"
           className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> Volver
         </Link>
         <h1 className="text-3xl font-bold flex items-center gap-3">
-          <span>👤</span> {data?.sellerName ?? "Loading..."}
+          <span>👤</span> {data?.sellerName ?? "Cargando..."}
         </h1>
       </div>
 
@@ -114,7 +114,7 @@ export default function SellerDetailPage() {
             className="gap-2"
           >
             <FileText className="h-4 w-4" />
-            📄 View Report
+            📄 Ver Reporte
           </Button>
           <Button
             onClick={handleDownloadPdf}
@@ -122,7 +122,7 @@ export default function SellerDetailPage() {
             className="gap-2"
           >
             {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {pdfLoading ? "Generating..." : "📥 Download PDF"}
+            {pdfLoading ? "Generando..." : "📥 Descargar PDF"}
           </Button>
         </div>
       </div>
@@ -130,24 +130,24 @@ export default function SellerDetailPage() {
       {loading ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <span className="text-4xl mb-3 animate-pulse">⏳</span>
-          <p>Loading...</p>
+          <p>Cargando...</p>
         </div>
       ) : !data || data.totalSales === 0 ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <span className="text-4xl mb-3">📭</span>
-          <p>No sales data for this selection.</p>
+          <p>Sin datos de ventas para esta selección.</p>
         </div>
       ) : (
         <>
           {/* KPI Cards */}
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-            <KpiCard title="Total Sales" value={data.totalSales} icon="🛒" />
-            <KpiCard title="Free" value={data.freeCount} icon="🆓" />
-            <KpiCard title="Paid" value={data.paidCount} icon="💳" />
-            <KpiCard title="Revenue USD" value={`$${data.revenueUSD.toFixed(2)}`} icon="💵" />
-            <KpiCard title="Revenue BCV" value={`$${data.revenueBCV.toFixed(2)}`} icon="💰" />
-            <KpiCard title="Commission USD" value={`$${data.commissionUSD.toFixed(2)}`} icon="🤝" />
-            <KpiCard title="Commission BCV" value={`$${data.commissionBCV.toFixed(2)}`} icon="🤝" />
+            <KpiCard title="Ventas Totales" value={data.totalSales} icon="🛒" />
+            <KpiCard title="Gratis" value={data.freeCount} icon="🆓" />
+            <KpiCard title="Pagadas" value={data.paidCount} icon="💳" />
+            <KpiCard title="Ingresos USD" value={`$${data.revenueUSD.toFixed(2)}`} icon="💵" />
+            <KpiCard title="Ingresos BCV" value={`$${data.revenueBCV.toFixed(2)}`} icon="💰" />
+            <KpiCard title="Comisión USD" value={`$${data.commissionUSD.toFixed(2)}`} icon="🤝" />
+            <KpiCard title="Comisión BCV" value={`$${data.commissionBCV.toFixed(2)}`} icon="🤝" />
           </div>
 
           {/* Charts */}
@@ -155,7 +155,7 @@ export default function SellerDetailPage() {
             {data.byPlan.length > 0 && (
               <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">📋 Sales by Plan</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">📋 Ventas por Plan</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
@@ -174,7 +174,7 @@ export default function SellerDetailPage() {
             {data.byZone.length > 0 && (
               <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">📍 Sales by Zone</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">📍 Ventas por Zona</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
@@ -192,15 +192,15 @@ export default function SellerDetailPage() {
 
             <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">⚡ Free vs Paid</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">⚡ Gratis vs Pagadas</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
                       data={[
-                        { name: "Free", value: data.freeCount },
-                        { name: "Paid", value: data.paidCount },
+                        { name: "Gratis", value: data.freeCount },
+                        { name: "Pagadas", value: data.paidCount },
                       ]}
                       cx="50%" cy="50%" outerRadius={80}
                       label={({ name, value }) => `${name}: ${value}`}
@@ -220,7 +220,7 @@ export default function SellerDetailPage() {
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                📝 Transactions ({data.transactions.length})
+                📝 Transacciones ({data.transactions.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -228,22 +228,22 @@ export default function SellerDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>📅 Date</TableHead>
-                      <TableHead>👤 Customer</TableHead>
-                      <TableHead>📍 Zone</TableHead>
+                      <TableHead>📅 Fecha</TableHead>
+                      <TableHead>👤 Cliente</TableHead>
+                      <TableHead>📍 Zona</TableHead>
                       <TableHead>📋 Plan</TableHead>
-                      <TableHead>⚡ Type</TableHead>
-                      <TableHead>💱 Currency</TableHead>
-                      <TableHead className="text-right">💰 Amount</TableHead>
-                      <TableHead className="text-right">🤝 Commission</TableHead>
-                      <TableHead>💳 Payment</TableHead>
+                      <TableHead>⚡ Tipo</TableHead>
+                      <TableHead>💱 Moneda</TableHead>
+                      <TableHead className="text-right">💰 Monto</TableHead>
+                      <TableHead className="text-right">🤝 Comisión</TableHead>
+                      <TableHead>💳 Pago</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.transactions.map((tx) => (
                       <TableRow key={tx.id} className="hover:bg-muted/30 transition-colors">
                         <TableCell className="whitespace-nowrap">
-                          {new Date(tx.transactionDate).toLocaleDateString("en-US", {
+                          {new Date(tx.transactionDate).toLocaleDateString("es", {
                             month: "short", day: "numeric", year: "numeric",
                           })}
                         </TableCell>
@@ -252,7 +252,7 @@ export default function SellerDetailPage() {
                         <TableCell>{tx.plan}</TableCell>
                         <TableCell>
                           <Badge variant={tx.installationType === "FREE" ? "secondary" : "default"}>
-                            {tx.installationType === "FREE" ? "🆓 FREE" : "💳 PAID"}
+                            {tx.installationType === "FREE" ? "🆓 GRATIS" : "💳 PAGADA"}
                           </Badge>
                         </TableCell>
                         <TableCell>{tx.currency}</TableCell>
@@ -272,7 +272,7 @@ export default function SellerDetailPage() {
             <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-lg">
-                  📊 Weekly Report — {data.sellerName}
+                  📊 Reporte Semanal — {data.sellerName}
                 </DialogTitle>
                 <DialogDescription asChild>
                   <div className="flex items-center gap-3 pt-1">
@@ -299,19 +299,19 @@ export default function SellerDetailPage() {
                 {/* Summary */}
                 <div className="grid grid-cols-4 gap-2">
                   <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/20 p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">🛒 Sales</p>
+                    <p className="text-[10px] text-muted-foreground">🛒 Ventas</p>
                     <p className="text-xl font-bold">{data.totalSales}</p>
                   </div>
                   <div className="rounded-lg border bg-green-50 dark:bg-green-950/20 p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">🆓 Free</p>
+                    <p className="text-[10px] text-muted-foreground">🆓 Gratis</p>
                     <p className="text-xl font-bold text-green-700 dark:text-green-400">{data.freeCount}</p>
                   </div>
                   <div className="rounded-lg border bg-purple-50 dark:bg-purple-950/20 p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">💳 Paid</p>
+                    <p className="text-[10px] text-muted-foreground">💳 Pagadas</p>
                     <p className="text-xl font-bold text-purple-700 dark:text-purple-400">{data.paidCount}</p>
                   </div>
                   <div className="rounded-lg border bg-amber-50 dark:bg-amber-950/20 p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">🤝 Comm.</p>
+                    <p className="text-[10px] text-muted-foreground">🤝 Com.</p>
                     <p className="text-sm font-bold leading-tight mt-0.5">
                       ${data.commissionUSD.toFixed(2)} <span className="text-muted-foreground text-[10px]">USD</span>
                     </p>
@@ -324,11 +324,11 @@ export default function SellerDetailPage() {
                 {/* Revenue row */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-lg border p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">💵 Revenue USD</p>
+                    <p className="text-[10px] text-muted-foreground">💵 Ingresos USD</p>
                     <p className="text-lg font-bold">${data.revenueUSD.toFixed(2)}</p>
                   </div>
                   <div className="rounded-lg border p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">💰 Revenue BCV</p>
+                    <p className="text-[10px] text-muted-foreground">💰 Ingresos BCV</p>
                     <p className="text-lg font-bold">${data.revenueBCV.toFixed(2)}</p>
                   </div>
                 </div>
@@ -338,7 +338,7 @@ export default function SellerDetailPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {data.byPlan.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold mb-1.5">📋 By Plan</h4>
+                        <h4 className="text-xs font-semibold mb-1.5">📋 Por Plan</h4>
                         <div className="rounded-lg border overflow-hidden">
                           <Table>
                             <TableBody>
@@ -355,7 +355,7 @@ export default function SellerDetailPage() {
                     )}
                     {data.byZone.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold mb-1.5">📍 By Zone</h4>
+                        <h4 className="text-xs font-semibold mb-1.5">📍 Por Zona</h4>
                         <div className="rounded-lg border overflow-hidden">
                           <Table>
                             <TableBody>
@@ -375,25 +375,25 @@ export default function SellerDetailPage() {
 
                 {/* Transactions - compact */}
                 <div>
-                  <h4 className="text-xs font-semibold mb-1.5">📝 Transactions ({data.transactions.length})</h4>
+                  <h4 className="text-xs font-semibold mb-1.5">📝 Transacciones ({data.transactions.length})</h4>
                   <div className="rounded-lg border overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/50 text-[11px]">
-                          <TableHead className="py-1.5 px-2">Date</TableHead>
-                          <TableHead className="py-1.5 px-2">Customer</TableHead>
+                          <TableHead className="py-1.5 px-2">Fecha</TableHead>
+                          <TableHead className="py-1.5 px-2">Cliente</TableHead>
                           <TableHead className="py-1.5 px-2">Plan</TableHead>
-                          <TableHead className="py-1.5 px-2">Type</TableHead>
-                          <TableHead className="py-1.5 px-2 text-right">Amount</TableHead>
-                          <TableHead className="py-1.5 px-2 text-right">Comm.</TableHead>
-                          <TableHead className="py-1.5 px-2">Pay</TableHead>
+                          <TableHead className="py-1.5 px-2">Tipo</TableHead>
+                          <TableHead className="py-1.5 px-2 text-right">Monto</TableHead>
+                          <TableHead className="py-1.5 px-2 text-right">Com.</TableHead>
+                          <TableHead className="py-1.5 px-2">Pago</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {data.transactions.map((tx) => (
                           <TableRow key={tx.id} className="text-xs">
                             <TableCell className="py-1.5 px-2 whitespace-nowrap">
-                              {new Date(tx.transactionDate).toLocaleDateString("en-US", {
+                              {new Date(tx.transactionDate).toLocaleDateString("es", {
                                 month: "short", day: "numeric",
                               })}
                             </TableCell>
@@ -417,11 +417,11 @@ export default function SellerDetailPage() {
 
               <DialogFooter className="pt-3 border-t">
                 <Button variant="outline" size="sm" onClick={() => setReportOpen(false)}>
-                  Close
+                  Cerrar
                 </Button>
                 <Button size="sm" onClick={handleDownloadPdf} disabled={pdfLoading} className="gap-1.5">
                   {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                  {pdfLoading ? "Generating..." : "📥 Download PDF"}
+                  {pdfLoading ? "Generando..." : "📥 Descargar PDF"}
                 </Button>
               </DialogFooter>
             </DialogContent>

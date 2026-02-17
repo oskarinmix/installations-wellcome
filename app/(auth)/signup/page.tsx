@@ -36,7 +36,7 @@ export default function SignupPage() {
     });
 
     if (error) {
-      setError(error.message ?? "Failed to sign up");
+      setError(error.message ?? "Error al registrarse");
       setLoading(false);
       return;
     }
@@ -57,8 +57,8 @@ export default function SignupPage() {
         <div className="flex justify-center mb-2">
           <span className="text-3xl">📡</span>
         </div>
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>Get started with Wellcomm</CardDescription>
+        <CardTitle className="text-2xl">Crear una cuenta</CardTitle>
+        <CardDescription>Comienza con Wellcomm</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -68,18 +68,18 @@ export default function SignupPage() {
             </div>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nombre</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Your name"
+              placeholder="Tu nombre"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Correo electrónico</Label>
             <Input
               id="email"
               type="email"
@@ -90,11 +90,11 @@ export default function SignupPage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Create a password"
+              placeholder="Crea una contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -102,7 +102,7 @@ export default function SignupPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? "Creando cuenta..." : "Registrarse"}
           </Button>
         </form>
         <div className="relative my-4">
@@ -110,7 +110,7 @@ export default function SignupPage() {
             <div className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
+            <span className="bg-card px-2 text-muted-foreground">o</span>
           </div>
         </div>
         <Button
@@ -137,14 +137,14 @@ export default function SignupPage() {
               fill="#EA4335"
             />
           </svg>
-          Continue with Google
+          Continuar con Google
         </Button>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
+          ¿Ya tienes una cuenta?{" "}
           <Link href="/login" className="text-primary hover:underline font-medium">
-            Sign in
+            Iniciar sesión
           </Link>
         </p>
       </CardFooter>
