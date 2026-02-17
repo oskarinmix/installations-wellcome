@@ -321,9 +321,16 @@ export default function SellersPage() {
                     <TableCell className="text-muted-foreground font-mono text-xs">{seller.id}</TableCell>
                     <TableCell className="font-medium">{seller.sellerName}</TableCell>
                     <TableCell className="text-center">
-                      <span className="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 text-sm font-semibold">
-                        {seller.totalSales}
-                      </span>
+                      <div className="inline-flex items-center gap-1.5">
+                        <span className="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 text-sm font-semibold">
+                          {seller.totalSales}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 text-muted-foreground px-1.5 py-0.5 text-[10px] font-medium">
+                          <span className="text-green-600 dark:text-green-400">{seller.freeCount}</span>
+                          <span className="mx-0.5">|</span>
+                          <span className="text-purple-600 dark:text-purple-400">{seller.paidCount}</span>
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-mono">${seller.commissionUSD.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-mono">${seller.commissionBCV.toFixed(2)}</TableCell>

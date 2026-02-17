@@ -545,12 +545,16 @@ export async function getAllSellers(weekStart?: string, weekEnd?: string) {
       let commissionBCV = 0;
       let totalRevenue = 0;
       let lastActive: Date | null = null;
+      let freeCount = 0;
+      let paidCount = 0;
 
       for (const sale of seller.sales) {
         const comm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
         if (sale.currency === "USD") commissionUSD += comm;
         else commissionBCV += comm;
         totalRevenue += sale.planRef.price;
+        if (sale.installationType === "FREE") freeCount++;
+        else paidCount++;
         if (!lastActive || sale.transactionDate > lastActive) {
           lastActive = sale.transactionDate;
         }
@@ -561,6 +565,8 @@ export async function getAllSellers(weekStart?: string, weekEnd?: string) {
         sellerName: seller.name,
         pin: seller.pin,
         totalSales: seller._count.sales,
+        freeCount,
+        paidCount,
         totalRevenue,
         commissionUSD,
         commissionBCV,
