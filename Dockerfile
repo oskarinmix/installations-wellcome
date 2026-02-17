@@ -36,6 +36,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
+# Copy full node_modules for external packages (pg, prisma) that standalone doesn't trace
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/lib/generated ./lib/generated
+
 USER nextjs
 
 EXPOSE 3000
