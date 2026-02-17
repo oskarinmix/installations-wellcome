@@ -11,9 +11,11 @@ function createPrismaClient() {
     hasDbUrl: !!process.env.DATABASE_URL,
     dbHost: process.env.DATABASE_URL?.match(/@([^:/]+)/)?.[1] ?? "unknown",
   });
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  const needsSsl = dbUrl.includes("sslmode=require") || dbUrl.includes("sslmode=verify");
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: dbUrl,
+    ssl: needsSsl ? { rejectUnauthorized: false } : false,
     connectionTimeoutMillis: 10000,
   });
   pool.on("error", (err) => console.error("[PRISMA] Pool error:", err.message));
