@@ -11,6 +11,7 @@ import {
   getSellerDetail,
   getSellerAvailableWeeks,
   generateSellerReport,
+  getBcvRate,
 } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Loader2, Download, ArrowLeft, LogIn } from "lucide-react";
@@ -35,6 +36,7 @@ export default function ConsultPage() {
   const [reportData, setReportData] = useState<SellerDetailData | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [bcvRate, setBcvRate] = useState<number>(0);
 
   const loadReport = useCallback(async (sid: number, week: WeekRange) => {
     setReportLoading(true);
@@ -49,6 +51,12 @@ export default function ConsultPage() {
       setReportLoading(false);
     }
   }, []);
+
+  // Fetch BCV rate after authentication
+  useEffect(() => {
+    if (!authenticated) return;
+    getBcvRate().then((r) => setBcvRate(r.rate));
+  }, [authenticated]);
 
   // Load weeks after authentication
   useEffect(() => {
@@ -277,21 +285,28 @@ export default function ConsultPage() {
             </Card>
           </div>
 
-          {/* Revenue */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground">Revenue USD</p>
-                <p className="text-lg font-bold">${reportData.revenueUSD.toFixed(2)}</p>
+          {/* Bs Conversion (only BCV commissions) */}
+          {bcvRate > 0 && reportData.commissionBCV > 0 && (
+            <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🇻🇪</span>
+                  <p className="text-sm font-semibold">Comisión BCV en Bolívares</p>
+                  <span className="text-[10px] text-muted-foreground ml-auto">Tasa BCV: {bcvRate.toFixed(2)} Bs/$</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Comisión BCV</p>
+                    <p className="text-lg font-bold">${reportData.commissionBCV.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Equivalente Bs</p>
+                    <p className="text-lg font-bold text-amber-700 dark:text-amber-400">{(reportData.commissionBCV * bcvRate).toFixed(2)} Bs</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground">Revenue BCV</p>
-                <p className="text-lg font-bold">${reportData.revenueBCV.toFixed(2)}</p>
-              </CardContent>
-            </Card>
-          </div>
+          )}
 
           {/* By Plan & By Zone */}
           {(reportData.byPlan.length > 0 || reportData.byZone.length > 0) && (
@@ -352,6 +367,7 @@ export default function ConsultPage() {
                       <TableHead className="py-1.5">Plan</TableHead>
                       <TableHead className="py-1.5">Type</TableHead>
                       <TableHead className="py-1.5 text-right">Amount</TableHead>
+                      <TableHead className="py-1.5 text-right">Inst. Fee</TableHead>
                       <TableHead className="py-1.5 text-right">Commission</TableHead>
                       <TableHead className="py-1.5">Payment</TableHead>
                     </TableRow>
@@ -380,6 +396,9 @@ export default function ConsultPage() {
                         </TableCell>
                         <TableCell className="py-1.5 text-right font-mono">
                           ${tx.subscriptionAmount.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="py-1.5 text-right font-mono">
+                          {tx.installationFee != null ? `$${tx.installationFee.toFixed(2)}` : "—"}
                         </TableCell>
                         <TableCell className="py-1.5 text-right font-mono">
                           ${tx.sellerCommission.toFixed(2)}

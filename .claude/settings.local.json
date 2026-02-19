@@ -30,7 +30,9 @@
       "Bash(DATABASE_URL=\"$DATABASE_URL\" npx tsx:*)",
       "Bash(source .env)",
       "Bash(curl:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:bcv-api.rafnixg.dev)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

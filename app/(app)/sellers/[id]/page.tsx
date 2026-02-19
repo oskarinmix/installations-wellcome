@@ -12,7 +12,7 @@ import { WeekSelector } from "@/components/week-selector";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getSellerDetail, getSellerAvailableWeeks, generateSellerReport, getCurrentUserRole } from "@/lib/actions";
+import { getSellerDetail, getSellerAvailableWeeks, generateSellerReport, getCurrentUserRole, getBcvRate } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { ArrowLeft, FileText, Download, Loader2 } from "lucide-react";
 import {
@@ -33,6 +33,7 @@ export default function SellerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [bcvRate, setBcvRate] = useState<number>(0);
 
   useEffect(() => {
     getCurrentUserRole().then((res) => {
@@ -40,6 +41,7 @@ export default function SellerDetailPage() {
         router.replace("/installations");
       }
     });
+    getBcvRate().then((r) => setBcvRate(r.rate));
   }, [router]);
 
   useEffect(() => {
@@ -144,11 +146,32 @@ export default function SellerDetailPage() {
             <KpiCard title="Ventas Totales" value={data.totalSales} icon="🛒" />
             <KpiCard title="Gratis" value={data.freeCount} icon="🆓" />
             <KpiCard title="Pagadas" value={data.paidCount} icon="💳" />
-            <KpiCard title="Ingresos USD" value={`$${data.revenueUSD.toFixed(2)}`} icon="💵" />
-            <KpiCard title="Ingresos BCV" value={`$${data.revenueBCV.toFixed(2)}`} icon="💰" />
             <KpiCard title="Comisión USD" value={`$${data.commissionUSD.toFixed(2)}`} icon="🤝" />
             <KpiCard title="Comisión BCV" value={`$${data.commissionBCV.toFixed(2)}`} icon="🤝" />
           </div>
+
+          {/* Bs Conversion (only BCV commissions) */}
+          {bcvRate > 0 && data.commissionBCV > 0 && (
+            <Card className="shadow-sm border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🇻🇪</span>
+                  <p className="text-sm font-semibold">Comisión BCV en Bolívares</p>
+                  <span className="text-[10px] text-muted-foreground ml-auto">Tasa BCV: {bcvRate.toFixed(2)} Bs/$</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground">Comisión BCV</p>
+                    <p className="text-lg font-bold">${data.commissionBCV.toFixed(2)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground">Equivalente Bs</p>
+                    <p className="text-lg font-bold text-amber-700 dark:text-amber-400">{(data.commissionBCV * bcvRate).toFixed(2)} Bs</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Charts */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -235,6 +258,7 @@ export default function SellerDetailPage() {
                       <TableHead>⚡ Tipo</TableHead>
                       <TableHead>💱 Moneda</TableHead>
                       <TableHead className="text-right">💰 Monto</TableHead>
+                      <TableHead className="text-right">🔧 Cobro Inst.</TableHead>
                       <TableHead className="text-right">🤝 Comisión</TableHead>
                       <TableHead>💳 Pago</TableHead>
                     </TableRow>
@@ -257,6 +281,7 @@ export default function SellerDetailPage() {
                         </TableCell>
                         <TableCell>{tx.currency}</TableCell>
                         <TableCell className="text-right font-mono">${tx.subscriptionAmount.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono">{tx.installationFee != null ? `$${tx.installationFee.toFixed(2)}` : "—"}</TableCell>
                         <TableCell className="text-right font-mono">${tx.sellerCommission.toFixed(2)}</TableCell>
                         <TableCell>{tx.paymentMethod}</TableCell>
                       </TableRow>
@@ -321,17 +346,26 @@ export default function SellerDetailPage() {
                   </div>
                 </div>
 
-                {/* Revenue row */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">💵 Ingresos USD</p>
-                    <p className="text-lg font-bold">${data.revenueUSD.toFixed(2)}</p>
+                {/* Bs Conversion in report dialog (only BCV) */}
+                {bcvRate > 0 && data.commissionBCV > 0 && (
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span>🇻🇪</span>
+                      <p className="text-xs font-semibold">Comisión BCV en Bolívares</p>
+                      <span className="text-[10px] text-muted-foreground ml-auto">Tasa: {bcvRate.toFixed(2)} Bs/$</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Com. BCV</p>
+                        <p className="text-sm font-bold">${data.commissionBCV.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Equivalente Bs</p>
+                        <p className="text-sm font-bold text-amber-700 dark:text-amber-400">{(data.commissionBCV * bcvRate).toFixed(2)} Bs</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="rounded-lg border p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground">💰 Ingresos BCV</p>
-                    <p className="text-lg font-bold">${data.revenueBCV.toFixed(2)}</p>
-                  </div>
-                </div>
+                )}
 
                 {/* Plan & Zone side by side */}
                 {(data.byPlan.length > 0 || data.byZone.length > 0) && (
@@ -385,6 +419,7 @@ export default function SellerDetailPage() {
                           <TableHead className="py-1.5 px-2">Plan</TableHead>
                           <TableHead className="py-1.5 px-2">Tipo</TableHead>
                           <TableHead className="py-1.5 px-2 text-right">Monto</TableHead>
+                          <TableHead className="py-1.5 px-2 text-right">Cobro Inst.</TableHead>
                           <TableHead className="py-1.5 px-2 text-right">Com.</TableHead>
                           <TableHead className="py-1.5 px-2">Pago</TableHead>
                         </TableRow>
@@ -405,6 +440,7 @@ export default function SellerDetailPage() {
                               </span>
                             </TableCell>
                             <TableCell className="py-1.5 px-2 text-right font-mono">${tx.subscriptionAmount.toFixed(2)}</TableCell>
+                            <TableCell className="py-1.5 px-2 text-right font-mono">{tx.installationFee != null ? `$${tx.installationFee.toFixed(2)}` : "—"}</TableCell>
                             <TableCell className="py-1.5 px-2 text-right font-mono">${tx.sellerCommission.toFixed(2)}</TableCell>
                             <TableCell className="py-1.5 px-2">{tx.paymentMethod}</TableCell>
                           </TableRow>

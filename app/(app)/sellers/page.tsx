@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWeeks, createSeller, updateSeller, getCurrentUserRole } from "@/lib/actions";
+import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWeeks, createSeller, updateSeller, getCurrentUserRole, getBcvRate } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Search, Users, ChevronLeft, ChevronRight, FileText, Download, Loader2, Plus, Pencil } from "lucide-react";
 
@@ -47,6 +47,7 @@ export default function SellersPage() {
   const [sellerPin, setSellerPin] = useState("");
   const [sellerSaving, setSellerSaving] = useState(false);
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
+  const [bcvRate, setBcvRate] = useState<number>(0);
 
   const loadSellers = useCallback(async (week?: WeekRange | null) => {
     setLoading(true);
@@ -67,6 +68,7 @@ export default function SellersPage() {
         return;
       }
     });
+    getBcvRate().then((r) => setBcvRate(r.rate));
     getAllAvailableWeeks().then((dates) => {
       const available = getAvailableWeeks(dates.map((d) => new Date(d)));
       setWeeks(available);
@@ -466,17 +468,26 @@ export default function SellersPage() {
                 </div>
               </div>
 
-              {/* Revenue row */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-lg border p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">💵 Ingresos USD</p>
-                  <p className="text-lg font-bold">${reportData.revenueUSD.toFixed(2)}</p>
+              {/* Bs Conversion (only BCV) */}
+              {bcvRate > 0 && reportData.commissionBCV > 0 && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span>🇻🇪</span>
+                    <p className="text-xs font-semibold">Comisión BCV en Bolívares</p>
+                    <span className="text-[10px] text-muted-foreground ml-auto">Tasa: {bcvRate.toFixed(2)} Bs/$</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Com. BCV</p>
+                      <p className="text-sm font-bold">${reportData.commissionBCV.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Equivalente Bs</p>
+                      <p className="text-sm font-bold text-amber-700 dark:text-amber-400">{(reportData.commissionBCV * bcvRate).toFixed(2)} Bs</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-lg border p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground">💰 Ingresos BCV</p>
-                  <p className="text-lg font-bold">${reportData.revenueBCV.toFixed(2)}</p>
-                </div>
-              </div>
+              )}
 
               {/* Plan & Zone side by side */}
               {(reportData.byPlan.length > 0 || reportData.byZone.length > 0) && (

@@ -22,6 +22,7 @@ interface PdfData {
   revenueBCV: number;
   commissionUSD: number;
   commissionBCV: number;
+  bcvRate?: number;
   byPlan: { name: string; count: number }[];
   byZone: { name: string; count: number }[];
   transactions: PdfTransaction[];
@@ -51,7 +52,6 @@ function addSellerToDoc(doc: jsPDF, data: PdfData, isFirst: boolean) {
   doc.setFontSize(10);
   const kpis = [
     [`Ventas Totales: ${data.totalSales}`, `Gratis: ${data.freeCount}`, `Pagadas: ${data.paidCount}`],
-    [`Ingresos USD: $${data.revenueUSD.toFixed(2)}`, `Ingresos BCV: $${data.revenueBCV.toFixed(2)}`],
     [`Comisión USD: $${data.commissionUSD.toFixed(2)}`, `Comisión BCV: $${data.commissionBCV.toFixed(2)}`],
   ];
 
@@ -59,6 +59,18 @@ function addSellerToDoc(doc: jsPDF, data: PdfData, isFirst: boolean) {
     doc.text(row.join("    |    "), 14, y);
     y += 6;
   }
+
+  // Bs conversion (only BCV commissions)
+  if (data.bcvRate && data.bcvRate > 0 && data.commissionBCV > 0) {
+    y += 2;
+    doc.setFontSize(10);
+    doc.setTextColor(150, 100, 0);
+    const commBs = data.commissionBCV * data.bcvRate;
+    doc.text(`Tasa BCV: ${data.bcvRate.toFixed(2)} Bs/$    |    Comisión BCV en Bs: ${commBs.toFixed(2)} Bs ($${data.commissionBCV.toFixed(2)})`, 14, y);
+    doc.setTextColor(0);
+    y += 6;
+  }
+
   y += 4;
 
   // Plan breakdown
@@ -158,6 +170,145 @@ export function generateSellerPdf(data: PdfData): Buffer {
 export function generateAllSellersPdf(sellers: PdfData[]): Buffer {
   const doc = new jsPDF();
   sellers.forEach((data, i) => addSellerToDoc(doc, data, i === 0));
+  addFooters(doc);
+  return Buffer.from(doc.output("arraybuffer"));
+}
+
+interface WeeklySummaryData {
+  weekLabel: string;
+  bcvRate: number;
+  installerCommissionUSD: number;
+  installerCommissionBCV: number;
+  sellers: {
+    sellerName: string;
+    totalSales: number;
+    freeCount: number;
+    paidCount: number;
+    commissionUSD: number;
+    commissionBCV: number;
+  }[];
+}
+
+export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
+  const doc = new jsPDF();
+  let y = 15;
+
+  // Title
+  doc.setFontSize(18);
+  doc.setTextColor(0);
+  doc.text("Resumen Semanal de Ventas", 14, y);
+  y += 8;
+
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(`Semana: ${data.weekLabel}`, 14, y);
+  y += 6;
+  if (data.bcvRate > 0) {
+    doc.text(`Tasa BCV: ${data.bcvRate.toFixed(2)} Bs/$`, 14, y);
+  }
+  y += 10;
+
+  // Totals
+  let totalSales = 0, totalFree = 0, totalPaid = 0;
+  let totalCommUSD = 0, totalCommBCV = 0;
+  for (const s of data.sellers) {
+    totalSales += s.totalSales;
+    totalFree += s.freeCount;
+    totalPaid += s.paidCount;
+    totalCommUSD += s.commissionUSD;
+    totalCommBCV += s.commissionBCV;
+  }
+
+  doc.setFontSize(13);
+  doc.setTextColor(0);
+  doc.text("Totales Generales", 14, y);
+  y += 7;
+
+  doc.setFontSize(10);
+  doc.text(`Ventas: ${totalSales}    |    Gratis: ${totalFree}    |    Pagadas: ${totalPaid}`, 14, y);
+  y += 6;
+  doc.text(`Com. Vendedores USD: $${totalCommUSD.toFixed(2)}    |    Com. Vendedores BCV: $${totalCommBCV.toFixed(2)}`, 14, y);
+  y += 6;
+  if (data.bcvRate > 0 && totalCommBCV > 0) {
+    doc.setTextColor(150, 100, 0);
+    const totalBs = totalCommBCV * data.bcvRate;
+    doc.text(`Com. Vendedores BCV en Bs: ${totalBs.toFixed(2)} Bs ($${totalCommBCV.toFixed(2)})`, 14, y);
+    doc.setTextColor(0);
+    y += 6;
+  }
+  y += 4;
+
+  // Installer commissions
+  doc.setFontSize(13);
+  doc.text("Comisiones Instaladores", 14, y);
+  y += 7;
+  doc.setFontSize(10);
+  doc.text(`Com. Instalador USD: $${data.installerCommissionUSD.toFixed(2)}    |    Com. Instalador BCV: $${data.installerCommissionBCV.toFixed(2)}`, 14, y);
+  y += 6;
+  if (data.bcvRate > 0 && data.installerCommissionBCV > 0) {
+    doc.setTextColor(150, 100, 0);
+    const instBs = data.installerCommissionBCV * data.bcvRate;
+    doc.text(`Com. Instalador BCV en Bs: ${instBs.toFixed(2)} Bs ($${data.installerCommissionBCV.toFixed(2)})`, 14, y);
+    doc.setTextColor(0);
+    y += 6;
+  }
+  y += 6;
+
+  // Sellers table
+  doc.setFontSize(13);
+  doc.text("Detalle por Vendedor", 14, y);
+  y += 2;
+
+  const head = data.bcvRate > 0
+    ? [["Vendedor", "Ventas", "Gratis", "Pagadas", "Com. USD", "Com. BCV", "Com. BCV (Bs)"]]
+    : [["Vendedor", "Ventas", "Gratis", "Pagadas", "Com. USD", "Com. BCV"]];
+
+  const body = data.sellers.map((s) => {
+    const row = [
+      s.sellerName,
+      String(s.totalSales),
+      String(s.freeCount),
+      String(s.paidCount),
+      `$${s.commissionUSD.toFixed(2)}`,
+      `$${s.commissionBCV.toFixed(2)}`,
+    ];
+    if (data.bcvRate > 0) {
+      row.push(`${(s.commissionBCV * data.bcvRate).toFixed(2)} Bs`);
+    }
+    return row;
+  });
+
+  // Totals row
+  const totalsRow = [
+    "TOTAL",
+    String(totalSales),
+    String(totalFree),
+    String(totalPaid),
+    `$${totalCommUSD.toFixed(2)}`,
+    `$${totalCommBCV.toFixed(2)}`,
+  ];
+  if (data.bcvRate > 0) {
+    totalsRow.push(`${(totalCommBCV * data.bcvRate).toFixed(2)} Bs`);
+  }
+  body.push(totalsRow);
+
+  autoTable(doc, {
+    startY: y,
+    head,
+    body,
+    margin: { left: 14, right: 14 },
+    theme: "grid",
+    headStyles: { fillColor: [41, 128, 185], fontSize: 9 },
+    styles: { fontSize: 9, cellPadding: 2.5 },
+    didParseCell(hookData) {
+      // Bold the totals row
+      if (hookData.section === "body" && hookData.row.index === body.length - 1) {
+        hookData.cell.styles.fontStyle = "bold";
+        hookData.cell.styles.fillColor = [240, 240, 240];
+      }
+    },
+  });
+
   addFooters(doc);
   return Buffer.from(doc.output("arraybuffer"));
 }

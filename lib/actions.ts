@@ -5,6 +5,26 @@ import { parseExcelFile, type ParseResult } from "./excel-parser";
 import type { Currency, InstallationType } from "@/lib/generated/prisma/client";
 import { getUserRole } from "./get-user-role";
 
+// ── BCV Rate ──
+
+let cachedBcvRate: { rate: number; fetchedAt: number } | null = null;
+const BCV_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+
+export async function getBcvRate(): Promise<{ rate: number; date: string }> {
+  if (cachedBcvRate && Date.now() - cachedBcvRate.fetchedAt < BCV_CACHE_MS) {
+    return { rate: cachedBcvRate.rate, date: new Date().toISOString().slice(0, 10) };
+  }
+  try {
+    const res = await fetch("https://bcv-api.rafnixg.dev/rates/", { next: { revalidate: 600 } });
+    if (!res.ok) throw new Error("BCV API error");
+    const data = await res.json();
+    cachedBcvRate = { rate: data.dollar, fetchedAt: Date.now() };
+    return { rate: data.dollar, date: data.date };
+  } catch {
+    return { rate: cachedBcvRate?.rate ?? 0, date: "" };
+  }
+}
+
 // ── Role Helpers ──
 
 export async function getCurrentUserRole() {
@@ -650,6 +670,7 @@ export async function getSellerDetail(sellerId: number, weekStart?: string, week
       installationType: s.installationType,
       currency: s.currency,
       subscriptionAmount: s.subscriptionAmount,
+      installationFee: s.installationFee,
       sellerCommission: getSellerCommission(s.installationType as "FREE" | "PAID", config),
       installerCommission: getInstallerCommission(s.installationType as "FREE" | "PAID", s.planRef.price, config),
       expectedPrice: s.planRef.price ?? null,
@@ -685,10 +706,14 @@ export async function generateSellerReport(
   weekLabel: string
 ) {
   const { generateSellerPdf } = await import("./generate-pdf");
-  const detail = await getSellerDetail(sellerId, weekStart, weekEnd);
+  const [detail, bcv] = await Promise.all([
+    getSellerDetail(sellerId, weekStart, weekEnd),
+    getBcvRate(),
+  ]);
   const pdfBuffer = generateSellerPdf({
     ...detail,
     weekLabel,
+    bcvRate: bcv.rate,
   });
   return pdfBuffer.toString("base64");
 }
@@ -724,14 +749,80 @@ export async function generateAllSellerReports(
   const sellers = await getSellersSummaryForWeek(weekStart, weekEnd);
   if (sellers.length === 0) throw new Error("No sellers with sales in this week");
 
+  const bcv = await getBcvRate();
   const allData = [];
   for (const seller of sellers) {
     const detail = await getSellerDetail(seller.id, weekStart, weekEnd);
     if (detail.totalSales === 0) continue;
-    allData.push({ ...detail, weekLabel });
+    allData.push({ ...detail, weekLabel, bcvRate: bcv.rate });
   }
 
   const pdfBuffer = generateAllSellersPdf(allData);
+  return pdfBuffer.toString("base64");
+}
+
+export async function generateWeeklySummary(
+  weekStart: string,
+  weekEnd: string,
+  weekLabel: string
+) {
+  await requireAdmin();
+  const { generateWeeklySummaryPdf } = await import("./generate-pdf");
+
+  const config = await getCommissionConfig();
+  const bcv = await getBcvRate();
+
+  const sellersRaw = await prisma.seller.findMany({
+    include: {
+      sales: {
+        where: {
+          transactionDate: { gte: new Date(weekStart), lte: new Date(weekEnd) },
+        },
+        include: { planRef: { select: { price: true } } },
+      },
+    },
+  });
+
+  let totalInstallerCommUSD = 0;
+  let totalInstallerCommBCV = 0;
+
+  const sellers = sellersRaw
+    .filter((s) => s.sales.length > 0)
+    .map((s) => {
+      let commUSD = 0, commBCV = 0, freeCount = 0, paidCount = 0;
+      for (const sale of s.sales) {
+        const sellerComm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
+        const installerComm = getInstallerCommission(sale.installationType as "FREE" | "PAID", sale.planRef.price, config);
+        if (sale.currency === "USD") {
+          commUSD += sellerComm;
+          totalInstallerCommUSD += installerComm;
+        } else {
+          commBCV += sellerComm;
+          totalInstallerCommBCV += installerComm;
+        }
+        if (sale.installationType === "FREE") freeCount++;
+        else paidCount++;
+      }
+      return {
+        sellerName: s.name,
+        totalSales: s.sales.length,
+        freeCount,
+        paidCount,
+        commissionUSD: commUSD,
+        commissionBCV: commBCV,
+      };
+    })
+    .sort((a, b) => b.totalSales - a.totalSales);
+
+  if (sellers.length === 0) throw new Error("No hay vendedores con ventas en esta semana");
+
+  const pdfBuffer = generateWeeklySummaryPdf({
+    weekLabel,
+    bcvRate: bcv.rate,
+    sellers,
+    installerCommissionUSD: totalInstallerCommUSD,
+    installerCommissionBCV: totalInstallerCommBCV,
+  });
   return pdfBuffer.toString("base64");
 }
 
@@ -839,7 +930,10 @@ export async function createInstallation(data: {
   subscriptionAmount: number;
   paymentMethod: string;
   referenceCode?: string;
+  installationFee?: number;
 }) {
+  if (!data.paymentMethod?.trim()) throw new Error("Payment method is required");
+
   const seller = await prisma.seller.findUnique({ where: { id: data.sellerId }, select: { name: true } });
   if (!seller) throw new Error("Seller not found");
 
@@ -858,6 +952,7 @@ export async function createInstallation(data: {
       installationType: data.installationType,
       currency: data.currency,
       subscriptionAmount: data.subscriptionAmount,
+      installationFee: data.installationType === "PAID" ? (data.installationFee ?? null) : null,
       sellerRef: { connect: { id: data.sellerId } },
       planRef: { connect: { id: data.planId } },
     },
@@ -918,6 +1013,7 @@ export async function updateInstallation(
     subscriptionAmount: number;
     paymentMethod: string;
     referenceCode?: string;
+    installationFee?: number;
   }
 ) {
   await requireAdmin();
@@ -940,6 +1036,7 @@ export async function updateInstallation(
       installationType: data.installationType,
       currency: data.currency,
       subscriptionAmount: data.subscriptionAmount,
+      installationFee: data.installationType === "PAID" ? (data.installationFee ?? null) : null,
       sellerId: data.sellerId,
       planId: data.planId,
     },

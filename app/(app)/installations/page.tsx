@@ -28,10 +28,11 @@ import {
   updateInstallation,
   deleteInstallation,
   getCurrentUserRole,
+  generateWeeklySummary,
 } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Combobox } from "@/components/ui/combobox";
-import { Search, Wrench, X, Plus, Pencil, Trash2, Download, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { Search, Wrench, X, Plus, Pencil, Trash2, Download, FileSpreadsheet, FileText, ChevronDown, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +67,7 @@ const emptyForm = {
   installationType: "PAID" as "FREE" | "PAID",
   paymentMethod: "",
   referenceCode: "",
+  installationFee: "",
 };
 
 type Seller = { id: number; sellerName: string };
@@ -95,6 +97,7 @@ export default function InstallationsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Installation | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   useEffect(() => {
     getCurrentUserRole().then((res) => setRole(res?.role ?? null));
@@ -227,6 +230,7 @@ export default function InstallationsPage() {
       installationType: row.installationType as "FREE" | "PAID",
       paymentMethod: row.paymentMethod,
       referenceCode: row.referenceCode || "",
+      installationFee: row.installationFee != null ? String(row.installationFee) : "",
     });
     await ensureDialogData();
   };
@@ -250,6 +254,12 @@ export default function InstallationsPage() {
     e.preventDefault();
     setSubmitting(true);
 
+    if (!form.paymentMethod) {
+      alert("Debe seleccionar un método de pago.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const zone = form.zone === "__custom" ? form.customZone.trim() : form.zone;
       const payload = {
@@ -263,6 +273,7 @@ export default function InstallationsPage() {
         subscriptionAmount: selectedPlan?.price ?? 0,
         paymentMethod: form.paymentMethod,
         referenceCode: form.referenceCode.trim() || undefined,
+        installationFee: form.installationType === "PAID" && form.installationFee ? Number(form.installationFee) : undefined,
       };
 
       if (editingId) {
@@ -284,7 +295,7 @@ export default function InstallationsPage() {
   };
 
   const getExportData = () => {
-    const headers = ["Fecha", "Cliente", "Vendedor", "Zona", "Plan", "Tipo", "Método Pago", "Moneda", "Monto", "Com. Vendedor", "Com. Instalador", "Referencia"];
+    const headers = ["Fecha", "Cliente", "Vendedor", "Zona", "Plan", "Tipo", "Método Pago", "Moneda", "Monto", "Cobro Inst.", "Com. Vendedor", "Com. Instalador", "Referencia"];
     const rows = sorted.map((row) => [
       new Date(row.transactionDate).toLocaleDateString("es", { year: "numeric", month: "2-digit", day: "2-digit" }),
       row.customerName,
@@ -295,6 +306,7 @@ export default function InstallationsPage() {
       row.paymentMethod || "",
       row.currency,
       Number((row.expectedPrice ?? row.subscriptionAmount).toFixed(2)),
+      row.installationFee != null ? Number(row.installationFee.toFixed(2)) : "",
       Number(row.sellerCommission.toFixed(2)),
       Number(row.installerCommission.toFixed(2)),
       row.referenceCode || "",
@@ -337,6 +349,32 @@ export default function InstallationsPage() {
     doc.save(`instalaciones_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
+  const handleDownloadSummary = async () => {
+    if (!selectedWeek) return;
+    const week = weeks.find((w) => w.start.toISOString() === selectedWeek);
+    if (!week) return;
+    setSummaryLoading(true);
+    try {
+      const base64 = await generateWeeklySummary(
+        week.start.toISOString(),
+        week.end.toISOString(),
+        week.label
+      );
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Resumen_Semanal_${week.label.replace(/\s/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al generar resumen");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -344,6 +382,17 @@ export default function InstallationsPage() {
           <span>🔧</span> Instalaciones
         </h1>
         <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              onClick={handleDownloadSummary}
+              disabled={!selectedWeek || summaryLoading}
+            >
+              {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              {summaryLoading ? "Generando..." : "Resumen Semanal"}
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-1" disabled={sorted.length === 0}>
@@ -527,6 +576,7 @@ export default function InstallationsPage() {
                     <SortableHead label="💳 Pago" sortKey="paymentMethod" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
                     <SortableHead label="💱 Moneda" sortKey="currency" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
                     <SortableHead label="💰 Monto" sortKey="subscriptionAmount" currentKey={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
+                    <TableHead className="text-right">🔧 Cobro Inst.</TableHead>
                     <TableHead>🤝 Com. Vendedor</TableHead>
                     <TableHead>🔧 Com. Instalador</TableHead>
                     <TableHead>🔗 Referencia</TableHead>
@@ -559,6 +609,7 @@ export default function InstallationsPage() {
                       <TableCell>{row.paymentMethod || "—"}</TableCell>
                       <TableCell>{row.currency}</TableCell>
                       <TableCell className="text-right font-mono">${(row.expectedPrice ?? row.subscriptionAmount).toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-mono">{row.installationFee != null ? `$${row.installationFee.toFixed(2)}` : "—"}</TableCell>
                       <TableCell className="font-mono">${row.sellerCommission.toFixed(2)}</TableCell>
                       <TableCell className="font-mono">${row.installerCommission.toFixed(2)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{row.referenceCode || "—"}</TableCell>
@@ -688,6 +739,20 @@ export default function InstallationsPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {form.installationType === "PAID" && (
+                <div className="space-y-1">
+                  <Label>Cobro de Instalación (opcional)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Monto cobrado por instalación"
+                    value={form.installationFee}
+                    onChange={(e) => set("installationFee", e.target.value)}
+                  />
+                </div>
+              )}
 
               <div className="space-y-1">
                 <Label>Método de Pago</Label>
