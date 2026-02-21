@@ -10,11 +10,40 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole, getAllUsers, updateUserRole } from "@/lib/actions";
+import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole, getAllUsers, updateUserRole, getCommissionRules, createCommissionRule, updateCommissionRule, deleteCommissionRule } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Package, Settings2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Settings2, Users, Sliders } from "lucide-react";
 
 type Plan = { id: number; name: string; price: number };
+
+type CommissionValueType = "FIXED" | "PERCENTAGE";
+type CommissionRule = {
+  id: number;
+  name: string;
+  sellerFreeType: CommissionValueType;
+  sellerFreeValue: number;
+  sellerPaidType: CommissionValueType;
+  sellerPaidValue: number;
+  installerFreeType: CommissionValueType;
+  installerFreeValue: number;
+  installerPaidType: CommissionValueType;
+  installerPaidValue: number;
+  _count: { sellers: number };
+};
+
+type CommissionRuleForm = Omit<CommissionRule, "id" | "_count">;
+
+const defaultRuleForm: CommissionRuleForm = {
+  name: "",
+  sellerFreeType: "FIXED",
+  sellerFreeValue: 8,
+  sellerPaidType: "FIXED",
+  sellerPaidValue: 10,
+  installerFreeType: "PERCENTAGE",
+  installerFreeValue: 0.5,
+  installerPaidType: "PERCENTAGE",
+  installerPaidValue: 0.7,
+};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -43,6 +72,15 @@ export default function SettingsPage() {
   const [commForm, setCommForm] = useState(commConfig);
   const [commSaving, setCommSaving] = useState(false);
 
+  // Commission Rules state
+  const [rules, setRules] = useState<CommissionRule[]>([]);
+  const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<CommissionRule | null>(null);
+  const [ruleForm, setRuleForm] = useState<CommissionRuleForm>(defaultRuleForm);
+  const [ruleSaving, setRuleSaving] = useState(false);
+  const [deleteRuleTarget, setDeleteRuleTarget] = useState<CommissionRule | null>(null);
+  const [deletingRule, setDeletingRule] = useState(false);
+
   // Users state
   type UserRow = { id: string; name: string; email: string; role: "admin" | "agent"; createdAt: Date };
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -60,6 +98,11 @@ export default function SettingsPage() {
     setCommConfig(config);
   }, []);
 
+  const loadRules = useCallback(async () => {
+    const data = await getCommissionRules();
+    setRules(data as CommissionRule[]);
+  }, []);
+
   const loadUsers = useCallback(async () => {
     const data = await getAllUsers();
     setUsers(data);
@@ -75,8 +118,9 @@ export default function SettingsPage() {
     });
     loadPlans();
     loadCommConfig();
+    loadRules();
     loadUsers();
-  }, [loadPlans, loadCommConfig, loadUsers, router]);
+  }, [loadPlans, loadCommConfig, loadRules, loadUsers, router]);
 
   const handleRoleChange = async (userId: string, newRole: "admin" | "agent") => {
     setRoleUpdating(userId);
@@ -136,6 +180,64 @@ export default function SettingsPage() {
       setDeleting(false);
     }
   };
+
+  const openCreateRule = () => {
+    setEditingRule(null);
+    setRuleForm(defaultRuleForm);
+    setRuleDialogOpen(true);
+  };
+
+  const openEditRule = (rule: CommissionRule) => {
+    setEditingRule(rule);
+    setRuleForm({
+      name: rule.name,
+      sellerFreeType: rule.sellerFreeType,
+      sellerFreeValue: rule.sellerFreeValue,
+      sellerPaidType: rule.sellerPaidType,
+      sellerPaidValue: rule.sellerPaidValue,
+      installerFreeType: rule.installerFreeType,
+      installerFreeValue: rule.installerFreeValue,
+      installerPaidType: rule.installerPaidType,
+      installerPaidValue: rule.installerPaidValue,
+    });
+    setRuleDialogOpen(true);
+  };
+
+  const handleSaveRule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ruleForm.name.trim()) return;
+    setRuleSaving(true);
+    try {
+      if (editingRule) {
+        await updateCommissionRule(editingRule.id, ruleForm);
+      } else {
+        await createCommissionRule(ruleForm);
+      }
+      setRuleDialogOpen(false);
+      loadRules();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al guardar regla");
+    } finally {
+      setRuleSaving(false);
+    }
+  };
+
+  const handleDeleteRule = async () => {
+    if (!deleteRuleTarget) return;
+    setDeletingRule(true);
+    try {
+      await deleteCommissionRule(deleteRuleTarget.id);
+      setDeleteRuleTarget(null);
+      loadRules();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al eliminar regla");
+    } finally {
+      setDeletingRule(false);
+    }
+  };
+
+  const formatRuleValue = (type: CommissionValueType, value: number) =>
+    type === "FIXED" ? `${value} (fijo)` : `${(value * 100).toFixed(0)}% (porcentaje)`;
 
   return (
     <div className="space-y-6">
@@ -307,6 +409,80 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Commission Rules Section */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Sliders className="h-5 w-5" />
+              Reglas de Comisión
+            </CardTitle>
+            <Button size="sm" className="gap-1" onClick={openCreateRule}>
+              <Plus className="h-4 w-4" /> Nueva Regla
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {rules.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-muted-foreground">
+              <span className="text-4xl mb-3">📭</span>
+              <p className="text-sm">No hay reglas de comisión configuradas.</p>
+              <p className="text-xs mt-1">Las reglas permiten personalizar comisiones por vendedor.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead className="text-center">Vendedor FREE</TableHead>
+                    <TableHead className="text-center">Vendedor PAID</TableHead>
+                    <TableHead className="text-center">Instalador FREE</TableHead>
+                    <TableHead className="text-center">Instalador PAID</TableHead>
+                    <TableHead className="text-center">Vendedores</TableHead>
+                    <TableHead className="w-20 text-center">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rules.map((rule) => (
+                    <TableRow key={rule.id}>
+                      <TableCell className="font-medium">{rule.name}</TableCell>
+                      <TableCell className="text-center font-mono text-sm">{formatRuleValue(rule.sellerFreeType, rule.sellerFreeValue)}</TableCell>
+                      <TableCell className="text-center font-mono text-sm">{formatRuleValue(rule.sellerPaidType, rule.sellerPaidValue)}</TableCell>
+                      <TableCell className="text-center font-mono text-sm">{formatRuleValue(rule.installerFreeType, rule.installerFreeValue)}</TableCell>
+                      <TableCell className="text-center font-mono text-sm">{formatRuleValue(rule.installerPaidType, rule.installerPaidValue)}</TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 text-xs font-semibold">
+                          {rule._count.sellers}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            title="Editar regla"
+                            className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
+                            onClick={() => openEditRule(rule)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            title="Eliminar regla"
+                            className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-red-100 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
+                            onClick={() => setDeleteRuleTarget(rule)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Users Section */}
       <Card className="shadow-sm">
         <CardHeader>
@@ -361,6 +537,161 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Commission Rule Create/Edit Dialog */}
+      <Dialog open={ruleDialogOpen} onOpenChange={setRuleDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingRule ? "Editar Regla de Comisión" : "Nueva Regla de Comisión"}</DialogTitle>
+            <DialogDescription>
+              Define valores personalizados de comisión para vendedor e instalador.
+              <span className="block mt-1 text-xs">Para porcentaje, usar valor entre 0 y 1 (ej: 0.5 = 50%)</span>
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveRule} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="ruleName">Nombre de la Regla</Label>
+              <Input
+                id="ruleName"
+                placeholder="ej. Premium, Especial"
+                value={ruleForm.name}
+                onChange={(e) => setRuleForm((f) => ({ ...f, name: e.target.value }))}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Seller FREE */}
+              <div className="space-y-1">
+                <Label className="text-xs">Vendedor FREE — Tipo</Label>
+                <Select
+                  value={ruleForm.sellerFreeType}
+                  onValueChange={(v) => setRuleForm((f) => ({ ...f, sellerFreeType: v as CommissionValueType }))}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FIXED">Fijo</SelectItem>
+                    <SelectItem value="PERCENTAGE">Porcentaje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Vendedor FREE — Valor</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  className="h-8 text-xs"
+                  value={ruleForm.sellerFreeValue}
+                  onChange={(e) => setRuleForm((f) => ({ ...f, sellerFreeValue: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              {/* Seller PAID */}
+              <div className="space-y-1">
+                <Label className="text-xs">Vendedor PAID — Tipo</Label>
+                <Select
+                  value={ruleForm.sellerPaidType}
+                  onValueChange={(v) => setRuleForm((f) => ({ ...f, sellerPaidType: v as CommissionValueType }))}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FIXED">Fijo</SelectItem>
+                    <SelectItem value="PERCENTAGE">Porcentaje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Vendedor PAID — Valor</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  className="h-8 text-xs"
+                  value={ruleForm.sellerPaidValue}
+                  onChange={(e) => setRuleForm((f) => ({ ...f, sellerPaidValue: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              {/* Installer FREE */}
+              <div className="space-y-1">
+                <Label className="text-xs">Instalador FREE — Tipo</Label>
+                <Select
+                  value={ruleForm.installerFreeType}
+                  onValueChange={(v) => setRuleForm((f) => ({ ...f, installerFreeType: v as CommissionValueType }))}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FIXED">Fijo</SelectItem>
+                    <SelectItem value="PERCENTAGE">Porcentaje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Instalador FREE — Valor</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  className="h-8 text-xs"
+                  value={ruleForm.installerFreeValue}
+                  onChange={(e) => setRuleForm((f) => ({ ...f, installerFreeValue: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              {/* Installer PAID */}
+              <div className="space-y-1">
+                <Label className="text-xs">Instalador PAID — Tipo</Label>
+                <Select
+                  value={ruleForm.installerPaidType}
+                  onValueChange={(v) => setRuleForm((f) => ({ ...f, installerPaidType: v as CommissionValueType }))}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FIXED">Fijo</SelectItem>
+                    <SelectItem value="PERCENTAGE">Porcentaje</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Instalador PAID — Valor</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  className="h-8 text-xs"
+                  value={ruleForm.installerPaidValue}
+                  onChange={(e) => setRuleForm((f) => ({ ...f, installerPaidValue: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setRuleDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={ruleSaving || !ruleForm.name.trim()}>
+                {ruleSaving ? "Guardando..." : editingRule ? "Guardar Cambios" : "Crear Regla"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Rule Confirmation Dialog */}
+      <Dialog open={!!deleteRuleTarget} onOpenChange={(open) => !open && setDeleteRuleTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Eliminar Regla de Comisión</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar <strong>{deleteRuleTarget?.name}</strong>?
+              {deleteRuleTarget && deleteRuleTarget._count.sellers > 0 && (
+                <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                  {deleteRuleTarget._count.sellers} vendedor{deleteRuleTarget._count.sellers !== 1 ? "es" : ""} usan esta regla y volverán a la configuración global.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteRuleTarget(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteRule} disabled={deletingRule}>
+              {deletingRule ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Commission Config Edit Dialog */}
       <Dialog open={commDialogOpen} onOpenChange={setCommDialogOpen}>

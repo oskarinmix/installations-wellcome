@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWeeks, createSeller, updateSeller, getCurrentUserRole, getBcvRate } from "@/lib/actions";
+import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWeeks, createSeller, updateSeller, getCurrentUserRole, getBcvRate, getCommissionRules, assignRuleToSeller } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Users, ChevronLeft, ChevronRight, FileText, Download, Loader2, Plus, Pencil } from "lucide-react";
 
 type SellerRow = Awaited<ReturnType<typeof getAllSellers>>[number];
@@ -42,12 +43,16 @@ export default function SellersPage() {
 
   // Create/Edit seller dialog
   const [sellerDialogOpen, setSellerDialogOpen] = useState(false);
-  const [editingSeller, setEditingSeller] = useState<{ id: number; name: string; pin: string | null } | null>(null);
+  const [editingSeller, setEditingSeller] = useState<{ id: number; name: string; pin: string | null; commissionRuleId: number | null } | null>(null);
   const [sellerName, setSellerName] = useState("");
   const [sellerPin, setSellerPin] = useState("");
+  const [sellerRuleId, setSellerRuleId] = useState<number | null>(null);
   const [sellerSaving, setSellerSaving] = useState(false);
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
   const [bcvRate, setBcvRate] = useState<number>(0);
+
+  type CommissionRuleOption = { id: number; name: string };
+  const [commissionRules, setCommissionRules] = useState<CommissionRuleOption[]>([]);
 
   const loadSellers = useCallback(async (week?: WeekRange | null) => {
     setLoading(true);
@@ -66,6 +71,11 @@ export default function SellersPage() {
       if (r === "agent") {
         router.replace("/installations");
         return;
+      }
+      if (r === "admin") {
+        getCommissionRules().then((data) =>
+          setCommissionRules(data.map((r) => ({ id: r.id, name: r.name })))
+        );
       }
     });
     getBcvRate().then((r) => setBcvRate(r.rate));
@@ -195,13 +205,15 @@ export default function SellersPage() {
     setEditingSeller(null);
     setSellerName("");
     setSellerPin("");
+    setSellerRuleId(null);
     setSellerDialogOpen(true);
   };
 
   const openEditSeller = (seller: SellerRow) => {
-    setEditingSeller({ id: seller.id, name: seller.sellerName, pin: seller.pin ?? null });
+    setEditingSeller({ id: seller.id, name: seller.sellerName, pin: seller.pin ?? null, commissionRuleId: seller.commissionRuleId ?? null });
     setSellerName(seller.sellerName);
     setSellerPin(seller.pin ?? "");
+    setSellerRuleId(seller.commissionRuleId ?? null);
     setSellerDialogOpen(true);
   };
 
@@ -212,8 +224,10 @@ export default function SellersPage() {
     try {
       if (editingSeller) {
         await updateSeller(editingSeller.id, sellerName, sellerPin || undefined);
+        await assignRuleToSeller(editingSeller.id, sellerRuleId);
       } else {
-        await createSeller(sellerName, sellerPin || undefined);
+        const newId = await createSeller(sellerName, sellerPin || undefined);
+        if (sellerRuleId !== null) await assignRuleToSeller(newId, sellerRuleId);
       }
       setSellerDialogOpen(false);
       loadSellers();
@@ -304,6 +318,7 @@ export default function SellersPage() {
                 <TableRow>
                   <SortHead label="#" sortKey="id" current={sortKey} dir={sortDir} onSort={handleSort} className="w-16" />
                   <SortHead label="👤 Nombre" sortKey="sellerName" current={sortKey} dir={sortDir} onSort={handleSort} />
+                  <TableHead>Regla</TableHead>
                   <SortHead label="🛒 Ventas" sortKey="totalSales" current={sortKey} dir={sortDir} onSort={handleSort} className="text-center" />
                   <SortHead label="💵 Com. USD" sortKey="commissionUSD" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
                   <SortHead label="💰 Com. BCV" sortKey="commissionBCV" current={sortKey} dir={sortDir} onSort={handleSort} className="text-right" />
@@ -322,6 +337,15 @@ export default function SellersPage() {
                   >
                     <TableCell className="text-muted-foreground font-mono text-xs">{seller.id}</TableCell>
                     <TableCell className="font-medium">{seller.sellerName}</TableCell>
+                    <TableCell>
+                      {seller.commissionRuleName ? (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {seller.commissionRuleName}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Global</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="inline-flex items-center gap-1.5">
                         <span className="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 text-sm font-semibold">
@@ -625,6 +649,27 @@ export default function SellersPage() {
                 Usado por el vendedor para acceder a la página de consulta pública.
               </p>
             </div>
+            {commissionRules.length > 0 && (
+              <div className="space-y-1">
+                <Label htmlFor="sellerRule">Regla de Comisión</Label>
+                <Select
+                  value={sellerRuleId !== null ? String(sellerRuleId) : "global"}
+                  onValueChange={(v) => setSellerRuleId(v === "global" ? null : Number(v))}
+                >
+                  <SelectTrigger id="sellerRule">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">Global (por defecto)</SelectItem>
+                    {commissionRules.map((r) => (
+                      <SelectItem key={r.id} value={String(r.id)}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <DialogFooter>
               <Button variant="outline" type="button" onClick={() => setSellerDialogOpen(false)}>
                 Cancelar

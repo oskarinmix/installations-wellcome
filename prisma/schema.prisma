@@ -13,6 +13,11 @@ enum InstallationType {
   PAID
 }
 
+enum CommissionValueType {
+  FIXED
+  PERCENTAGE
+}
+
 enum Currency {
   USD
   BCV
@@ -30,11 +35,27 @@ model Upload {
   sales      Sale[]
 }
 
+model CommissionRule {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique
+  sellerFreeType     CommissionValueType
+  sellerFreeValue    Float
+  sellerPaidType     CommissionValueType
+  sellerPaidValue    Float
+  installerFreeType  CommissionValueType
+  installerFreeValue Float
+  installerPaidType  CommissionValueType
+  installerPaidValue Float
+  sellers            Seller[]
+}
+
 model Seller {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique
-  pin   String?
-  sales Sale[]
+  id               Int              @id @default(autoincrement())
+  name             String           @unique
+  pin              String?
+  sales            Sale[]
+  commissionRuleId Int?
+  commissionRule   CommissionRule?  @relation(fields: [commissionRuleId], references: [id], onDelete: SetNull)
 }
 
 model Plan {

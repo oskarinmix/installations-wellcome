@@ -102,16 +102,90 @@ export async function updateCommissionConfig(data: {
 
 // ── Commission Helpers ──
 
-function getSellerCommission(installationType: "FREE" | "PAID", config: CommissionConfigData): number {
-  return installationType === "FREE"
-    ? config.sellerFreeCommission
-    : config.sellerPaidCommission;
-}
+type CommissionRuleData = {
+  sellerFreeType: "FIXED" | "PERCENTAGE";
+  sellerFreeValue: number;
+  sellerPaidType: "FIXED" | "PERCENTAGE";
+  sellerPaidValue: number;
+  installerFreeType: "FIXED" | "PERCENTAGE";
+  installerFreeValue: number;
+  installerPaidType: "FIXED" | "PERCENTAGE";
+  installerPaidValue: number;
+};
 
-function getInstallerCommission(installationType: "FREE" | "PAID", planPrice: number, config: CommissionConfigData): number {
-  return installationType === "FREE"
+function resolveCommissions(
+  installationType: "FREE" | "PAID",
+  planPrice: number,
+  rule: CommissionRuleData | null,
+  config: CommissionConfigData
+): { sellerComm: number; installerComm: number } {
+  if (rule) {
+    const sType = installationType === "FREE" ? rule.sellerFreeType : rule.sellerPaidType;
+    const sVal  = installationType === "FREE" ? rule.sellerFreeValue : rule.sellerPaidValue;
+    const iType = installationType === "FREE" ? rule.installerFreeType : rule.installerPaidType;
+    const iVal  = installationType === "FREE" ? rule.installerFreeValue : rule.installerPaidValue;
+    return {
+      sellerComm:    sType === "FIXED" ? sVal : planPrice * sVal,
+      installerComm: iType === "FIXED" ? iVal : planPrice * iVal,
+    };
+  }
+  const sellerComm    = installationType === "FREE" ? config.sellerFreeCommission : config.sellerPaidCommission;
+  const installerComm = installationType === "FREE"
     ? planPrice * config.installerFreePercentage
     : planPrice * config.installerPaidPercentage;
+  return { sellerComm, installerComm };
+}
+
+async function buildSellerRuleMap(): Promise<Map<string, CommissionRuleData | null>> {
+  const sellers = await prisma.seller.findMany({
+    select: { name: true, commissionRule: true },
+  });
+  return new Map(sellers.map((s) => [s.name, s.commissionRule ?? null]));
+}
+
+// ── Commission Rule CRUD ──
+
+type CommissionRuleInput = {
+  name: string;
+  sellerFreeType: "FIXED" | "PERCENTAGE";
+  sellerFreeValue: number;
+  sellerPaidType: "FIXED" | "PERCENTAGE";
+  sellerPaidValue: number;
+  installerFreeType: "FIXED" | "PERCENTAGE";
+  installerFreeValue: number;
+  installerPaidType: "FIXED" | "PERCENTAGE";
+  installerPaidValue: number;
+};
+
+export async function getCommissionRules() {
+  await requireAdmin();
+  return prisma.commissionRule.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { sellers: true } } },
+  });
+}
+
+export async function createCommissionRule(data: CommissionRuleInput) {
+  await requireAdmin();
+  return prisma.commissionRule.create({ data });
+}
+
+export async function updateCommissionRule(id: number, data: CommissionRuleInput) {
+  await requireAdmin();
+  return prisma.commissionRule.update({ where: { id }, data });
+}
+
+export async function deleteCommissionRule(id: number) {
+  await requireAdmin();
+  return prisma.commissionRule.delete({ where: { id } });
+}
+
+export async function assignRuleToSeller(sellerId: number, ruleId: number | null) {
+  await requireAdmin();
+  return prisma.seller.update({
+    where: { id: sellerId },
+    data: { commissionRuleId: ruleId },
+  });
 }
 
 // ── Seller / Plan Helpers ──
@@ -352,12 +426,13 @@ export async function getFilterOptions(uploadId: number) {
 
 export async function getDashboardData(filters: SalesFilters) {
   const where = buildWhere(filters);
-  const [sales, config] = await Promise.all([
+  const [sales, config, ruleMap] = await Promise.all([
     prisma.sale.findMany({
       where,
       include: { planRef: { select: { price: true } } },
     }),
     getCommissionConfig(),
+    buildSellerRuleMap(),
   ]);
 
   const totalSales = sales.length;
@@ -376,8 +451,12 @@ export async function getDashboardData(filters: SalesFilters) {
 
   for (const sale of sales) {
     const planPrice = sale.planRef.price;
-    const sellerComm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
-    const installerComm = getInstallerCommission(sale.installationType as "FREE" | "PAID", planPrice, config);
+    const { sellerComm, installerComm } = resolveCommissions(
+      sale.installationType as "FREE" | "PAID",
+      planPrice,
+      ruleMap.get(sale.sellerName) ?? null,
+      config
+    );
 
     if (sale.currency === "USD") {
       totalRevenueUSD += planPrice;
@@ -436,9 +515,10 @@ export async function getDashboardData(filters: SalesFilters) {
 
 export async function getSellerReport(filters: SalesFilters) {
   const where = buildWhere(filters);
-  const [sales, config] = await Promise.all([
+  const [sales, config, ruleMap] = await Promise.all([
     prisma.sale.findMany({ where, include: { planRef: { select: { price: true } } } }),
     getCommissionConfig(),
+    buildSellerRuleMap(),
   ]);
 
   const sellerMap: Record<string, {
@@ -473,7 +553,12 @@ export async function getSellerReport(filters: SalesFilters) {
     }
 
     const s = sellerMap[sale.sellerName];
-    const sellerComm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
+    const { sellerComm } = resolveCommissions(
+      sale.installationType as "FREE" | "PAID",
+      sale.planRef.price,
+      ruleMap.get(sale.sellerName) ?? null,
+      config
+    );
     s.totalInstallations++;
 
     if (sale.installationType === "FREE") s.freeInstallations++;
@@ -542,22 +627,24 @@ export async function getAllSellers(weekStart?: string, weekEnd?: string) {
     ? { transactionDate: { gte: new Date(weekStart), lte: new Date(weekEnd) } }
     : undefined;
 
-  const sellers = await prisma.seller.findMany({
-    include: {
-      _count: { select: { sales: dateFilter ? { where: dateFilter } : true } },
-      sales: {
-        where: dateFilter,
-        select: {
-          installationType: true,
-          currency: true,
-          transactionDate: true,
-          planRef: { select: { price: true } },
+  const [sellers, config] = await Promise.all([
+    prisma.seller.findMany({
+      include: {
+        _count: { select: { sales: dateFilter ? { where: dateFilter } : true } },
+        sales: {
+          where: dateFilter,
+          select: {
+            installationType: true,
+            currency: true,
+            transactionDate: true,
+            planRef: { select: { price: true } },
+          },
         },
+        commissionRule: true,
       },
-    },
-  });
-
-  const config = await getCommissionConfig();
+    }),
+    getCommissionConfig(),
+  ]);
 
   return sellers
     .map((seller) => {
@@ -569,7 +656,12 @@ export async function getAllSellers(weekStart?: string, weekEnd?: string) {
       let paidCount = 0;
 
       for (const sale of seller.sales) {
-        const comm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
+        const { sellerComm: comm } = resolveCommissions(
+          sale.installationType as "FREE" | "PAID",
+          sale.planRef.price,
+          seller.commissionRule ?? null,
+          config
+        );
         if (sale.currency === "USD") commissionUSD += comm;
         else commissionBCV += comm;
         totalRevenue += sale.planRef.price;
@@ -584,6 +676,8 @@ export async function getAllSellers(weekStart?: string, weekEnd?: string) {
         id: seller.id,
         sellerName: seller.name,
         pin: seller.pin,
+        commissionRuleId: seller.commissionRuleId,
+        commissionRuleName: seller.commissionRule?.name ?? null,
         totalSales: seller._count.sales,
         freeCount,
         paidCount,
@@ -600,7 +694,10 @@ export async function getAllSellers(weekStart?: string, weekEnd?: string) {
 // ── Seller Detail (week-filtered) ──
 
 export async function getSellerDetail(sellerId: number, weekStart?: string, weekEnd?: string) {
-  const seller = await prisma.seller.findUnique({ where: { id: sellerId }, select: { name: true } });
+  const seller = await prisma.seller.findUnique({
+    where: { id: sellerId },
+    select: { name: true, commissionRule: true },
+  });
   if (!seller) throw new Error("Seller not found");
 
   const where: Record<string, unknown> = { sellerId };
@@ -630,9 +727,16 @@ export async function getSellerDetail(sellerId: number, weekStart?: string, week
   const byPlan: Record<string, number> = {};
   const byZone: Record<string, number> = {};
 
+  const sellerRule = seller.commissionRule ?? null;
+
   for (const sale of sales) {
     totalSales++;
-    const comm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
+    const { sellerComm: comm } = resolveCommissions(
+      sale.installationType as "FREE" | "PAID",
+      sale.planRef.price,
+      sellerRule,
+      config
+    );
     if (sale.installationType === "FREE") freeCount++;
     else paidCount++;
     const planPrice = sale.planRef.price;
@@ -659,22 +763,30 @@ export async function getSellerDetail(sellerId: number, weekStart?: string, week
     commissionBCV,
     byPlan: Object.entries(byPlan).map(([name, count]) => ({ name, count })),
     byZone: Object.entries(byZone).map(([name, count]) => ({ name, count })),
-    transactions: sales.map((s) => ({
-      id: s.id,
-      transactionDate: s.transactionDate,
-      customerName: s.customerName,
-      zone: s.zone,
-      plan: s.plan,
-      paymentMethod: s.paymentMethod,
-      referenceCode: s.referenceCode,
-      installationType: s.installationType,
-      currency: s.currency,
-      subscriptionAmount: s.subscriptionAmount,
-      installationFee: s.installationFee,
-      sellerCommission: getSellerCommission(s.installationType as "FREE" | "PAID", config),
-      installerCommission: getInstallerCommission(s.installationType as "FREE" | "PAID", s.planRef.price, config),
-      expectedPrice: s.planRef.price ?? null,
-    })),
+    transactions: sales.map((s) => {
+      const { sellerComm, installerComm } = resolveCommissions(
+        s.installationType as "FREE" | "PAID",
+        s.planRef.price,
+        sellerRule,
+        config
+      );
+      return {
+        id: s.id,
+        transactionDate: s.transactionDate,
+        customerName: s.customerName,
+        zone: s.zone,
+        plan: s.plan,
+        paymentMethod: s.paymentMethod,
+        referenceCode: s.referenceCode,
+        installationType: s.installationType,
+        currency: s.currency,
+        subscriptionAmount: s.subscriptionAmount,
+        installationFee: s.installationFee,
+        sellerCommission: sellerComm,
+        installerCommission: installerComm,
+        expectedPrice: s.planRef.price ?? null,
+      };
+    }),
   };
 }
 
@@ -780,6 +892,7 @@ export async function generateWeeklySummary(
         },
         include: { planRef: { select: { price: true } } },
       },
+      commissionRule: true,
     },
   });
 
@@ -791,8 +904,12 @@ export async function generateWeeklySummary(
     .map((s) => {
       let commUSD = 0, commBCV = 0, freeCount = 0, paidCount = 0;
       for (const sale of s.sales) {
-        const sellerComm = getSellerCommission(sale.installationType as "FREE" | "PAID", config);
-        const installerComm = getInstallerCommission(sale.installationType as "FREE" | "PAID", sale.planRef.price, config);
+        const { sellerComm, installerComm } = resolveCommissions(
+          sale.installationType as "FREE" | "PAID",
+          sale.planRef.price,
+          s.commissionRule ?? null,
+          config
+        );
         if (sale.currency === "USD") {
           commUSD += sellerComm;
           totalInstallerCommUSD += installerComm;
@@ -868,22 +985,31 @@ export async function getAllInstallations(filters: InstallationsFilters) {
     ];
   }
 
-  const [sales, config] = await Promise.all([
+  const [sales, config, ruleMap] = await Promise.all([
     prisma.sale.findMany({
       where,
       orderBy: { transactionDate: "desc" },
       include: { planRef: { select: { price: true } } },
     }),
     getCommissionConfig(),
+    buildSellerRuleMap(),
   ]);
 
-  return sales.map((sale) => ({
-    ...sale,
-    sellerCommission: getSellerCommission(sale.installationType as "FREE" | "PAID", config),
-    installerCommission: getInstallerCommission(sale.installationType as "FREE" | "PAID", sale.planRef.price, config),
-    expectedPrice: sale.planRef.price ?? null,
-    planRef: undefined,
-  }));
+  return sales.map((sale) => {
+    const { sellerComm, installerComm } = resolveCommissions(
+      sale.installationType as "FREE" | "PAID",
+      sale.planRef.price,
+      ruleMap.get(sale.sellerName) ?? null,
+      config
+    );
+    return {
+      ...sale,
+      sellerCommission: sellerComm,
+      installerCommission: installerComm,
+      expectedPrice: sale.planRef.price ?? null,
+      planRef: undefined,
+    };
+  });
 }
 
 export async function getGlobalFilterOptions() {
@@ -965,12 +1091,13 @@ export async function createInstallation(data: {
 
 export async function getInstallerReport(filters: SalesFilters) {
   const where = buildWhere(filters);
-  const [sales, config] = await Promise.all([
+  const [sales, config, ruleMap] = await Promise.all([
     prisma.sale.findMany({
       where,
       include: { planRef: { select: { price: true } } },
     }),
     getCommissionConfig(),
+    buildSellerRuleMap(),
   ]);
 
   let totalInstallations = 0;
@@ -980,7 +1107,12 @@ export async function getInstallerReport(filters: SalesFilters) {
   let commissionBCV = 0;
 
   for (const sale of sales) {
-    const installerComm = getInstallerCommission(sale.installationType as "FREE" | "PAID", sale.planRef.price, config);
+    const { installerComm } = resolveCommissions(
+      sale.installationType as "FREE" | "PAID",
+      sale.planRef.price,
+      ruleMap.get(sale.sellerName) ?? null,
+      config
+    );
     totalInstallations++;
     if (sale.installationType === "FREE") freeInstallations++;
     else paidInstallations++;
