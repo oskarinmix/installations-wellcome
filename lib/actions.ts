@@ -1068,7 +1068,7 @@ export async function createInstallation(data: {
 
   const sale = await prisma.sale.create({
     data: {
-      transactionDate: new Date(data.transactionDate),
+      transactionDate: new Date(data.transactionDate + "T12:00:00.000Z"),
       customerName: data.customerName,
       sellerName: seller.name,
       zone: data.zone,
@@ -1158,7 +1158,7 @@ export async function updateInstallation(
   await prisma.sale.update({
     where: { id },
     data: {
-      transactionDate: new Date(data.transactionDate),
+      transactionDate: new Date(data.transactionDate + "T12:00:00.000Z"),
       customerName: data.customerName,
       sellerName: seller.name,
       zone: data.zone,
