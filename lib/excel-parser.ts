@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { currencyFromPaymentMethod } from "./payment-methods";
 
 export interface ParsedSale {
   transactionDate: Date;
@@ -107,12 +108,6 @@ function parseDate(value: unknown): Date | null {
   return null;
 }
 
-function detectCurrency(paymentMethod: string): "USD" | "BCV" {
-  const n = normalizeKey(paymentMethod);
-  if (n === "zelle" || n === "efectivo") return "USD";
-  if (n === "efectivo bs" || n === "pago movil" || n === "mixto") return "BCV";
-  return "USD";
-}
 
 function parseAmount(montoValue: unknown): number {
   if (typeof montoValue === "number") return montoValue;
@@ -210,7 +205,7 @@ export function parseExcelFile(buffer: Buffer): ParseResult {
     const installationType = gratisValue === "GRATIS" ? "FREE" : "PAID";
 
     const paymentMethod = String(getCell(rowArr, "medioPago") || "").trim();
-    const currency = detectCurrency(paymentMethod);
+    const currency = currencyFromPaymentMethod(paymentMethod);
 
     const montoRaw = getCell(rowArr, "montoSuscripcion");
     const subscriptionAmount = parseAmount(montoRaw);

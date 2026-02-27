@@ -20,7 +20,7 @@ import {
 import {
   getAllInstallations,
   getGlobalFilterOptions,
-  getAllSellers,
+  getSellersList,
   getAllAvailableWeeks,
   getPlanPrices,
   getZones,
@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { PAYMENT_METHODS, currencyFromPaymentMethod } from "@/lib/payment-methods";
 
 type Installation = Awaited<ReturnType<typeof getAllInstallations>>[number];
 type SortKey = "transactionDate" | "customerName" | "sellerName" | "zone" | "plan" | "subscriptionAmount" | "installationType" | "currency" | "paymentMethod";
@@ -200,10 +201,10 @@ export default function InstallationsPage() {
   const selectedPlan = plans.find((p) => p.id === Number(form.planId));
 
   const ensureDialogData = async () => {
-    if (sellers.length === 0) {
+    {
       setDialogLoading(true);
-      const [s, p, z] = await Promise.all([getAllSellers(), getPlanPrices(), getZones()]);
-      setSellers(s.map((sel) => ({ id: sel.id, sellerName: sel.sellerName })));
+      const [s, p, z] = await Promise.all([getSellersList(), getPlanPrices(), getZones()]);
+      setSellers(s.map((sel) => ({ id: sel.id, sellerName: sel.name })));
       setPlans(p);
       setZoneOptions(z);
       setDialogLoading(false);
@@ -269,7 +270,7 @@ export default function InstallationsPage() {
         zone,
         planId: Number(form.planId),
         installationType: form.installationType,
-        currency: "USD" as const,
+        currency: currencyFromPaymentMethod(form.paymentMethod),
         subscriptionAmount: selectedPlan?.price ?? 0,
         paymentMethod: form.paymentMethod,
         referenceCode: form.referenceCode.trim() || undefined,
@@ -759,11 +760,12 @@ export default function InstallationsPage() {
                 <Select value={form.paymentMethod} onValueChange={(v) => set("paymentMethod", v)} required>
                   <SelectTrigger><SelectValue placeholder="Seleccionar método de pago" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ZELLE">ZELLE</SelectItem>
-                    <SelectItem value="EFECTIVO">EFECTIVO</SelectItem>
-                    <SelectItem value="EFECTIVO BS">EFECTIVO BS</SelectItem>
-                    <SelectItem value="PAGO MOVIL">PAGO MOVIL</SelectItem>
-                    <SelectItem value="MIXTO">MIXTO</SelectItem>
+                    {PAYMENT_METHODS.map((pm) => (
+                      <SelectItem key={pm.value} value={pm.value}>
+                        {pm.value}
+                        <span className="ml-2 text-xs text-muted-foreground">{pm.currency}</span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

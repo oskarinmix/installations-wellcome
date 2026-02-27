@@ -584,6 +584,13 @@ export async function getSellerReport(filters: SalesFilters) {
 
 // ── Seller CRUD ──
 
+export async function getSellersList() {
+  return prisma.seller.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function createSeller(name: string, pin?: string) {
   await requireAdmin();
   const seller = await prisma.seller.create({
@@ -902,7 +909,8 @@ export async function generateWeeklySummary(
   const sellers = sellersRaw
     .filter((s) => s.sales.length > 0)
     .map((s) => {
-      let commUSD = 0, commBCV = 0, freeCount = 0, paidCount = 0;
+      let freeCountUSD = 0, freeCountBCV = 0, paidCountUSD = 0, paidCountBCV = 0;
+      let commissionUSD = 0, commissionBCV = 0;
       for (const sale of s.sales) {
         const { sellerComm, installerComm } = resolveCommissions(
           sale.installationType as "FREE" | "PAID",
@@ -910,26 +918,26 @@ export async function generateWeeklySummary(
           s.commissionRule ?? null,
           config
         );
-        if (sale.currency === "USD") {
-          commUSD += sellerComm;
-          totalInstallerCommUSD += installerComm;
-        } else {
-          commBCV += sellerComm;
-          totalInstallerCommBCV += installerComm;
-        }
-        if (sale.installationType === "FREE") freeCount++;
-        else paidCount++;
+        const isFree = sale.installationType === "FREE";
+        const isUSD  = sale.currency === "USD";
+        if (isFree && isUSD)   freeCountUSD++;
+        if (isFree && !isUSD)  freeCountBCV++;
+        if (!isFree && isUSD)  paidCountUSD++;
+        if (!isFree && !isUSD) paidCountBCV++;
+        if (isUSD) { commissionUSD += sellerComm; totalInstallerCommUSD += installerComm; }
+        else       { commissionBCV += sellerComm; totalInstallerCommBCV += installerComm; }
       }
       return {
         sellerName: s.name,
-        totalSales: s.sales.length,
-        freeCount,
-        paidCount,
-        commissionUSD: commUSD,
-        commissionBCV: commBCV,
+        freeCountUSD,
+        freeCountBCV,
+        paidCountUSD,
+        paidCountBCV,
+        commissionUSD,
+        commissionBCV,
       };
     })
-    .sort((a, b) => b.totalSales - a.totalSales);
+    .sort((a, b) => (b.freeCountUSD + b.freeCountBCV + b.paidCountUSD + b.paidCountBCV) - (a.freeCountUSD + a.freeCountBCV + a.paidCountUSD + a.paidCountBCV));
 
   if (sellers.length === 0) throw new Error("No hay vendedores con ventas en esta semana");
 

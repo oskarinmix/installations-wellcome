@@ -9,6 +9,7 @@ interface PdfTransaction {
   installationType: string;
   currency: string;
   subscriptionAmount: number;
+  sellerCommission: number;
   paymentMethod: string;
 }
 
@@ -116,29 +117,52 @@ function addSellerToDoc(doc: jsPDF, data: PdfData, isFirst: boolean) {
     doc.setFontSize(13);
     doc.text("Transacciones", 14, y);
     y += 2;
+
+    let totalCommUSD = 0;
+    let totalCommBCV = 0;
+    const txRows = data.transactions.map((t) => {
+      const date = t.transactionDate instanceof Date ? t.transactionDate : new Date(t.transactionDate);
+      if (t.currency === "USD") totalCommUSD += t.sellerCommission;
+      else totalCommBCV += t.sellerCommission;
+      return [
+        date.toLocaleDateString("es", { month: "short", day: "numeric", year: "numeric" }),
+        t.customerName,
+        t.zone,
+        t.plan,
+        t.installationType,
+        t.currency,
+        t.subscriptionAmount.toFixed(2),
+        `$${t.sellerCommission.toFixed(2)}`,
+        t.paymentMethod,
+      ];
+    });
+
+    // Totals row
+    txRows.push([
+      "", "", "", "", "", "TOTAL",
+      "",
+      `USD: $${totalCommUSD.toFixed(2)}  BCV: $${totalCommBCV.toFixed(2)}`,
+      "",
+    ]);
+
     autoTable(doc, {
       startY: y,
-      head: [["Fecha", "Cliente", "Zona", "Plan", "Tipo", "Moneda", "Monto", "Pago"]],
-      body: data.transactions.map((t) => {
-        const date = t.transactionDate instanceof Date ? t.transactionDate : new Date(t.transactionDate);
-        return [
-          date.toLocaleDateString("es", { month: "short", day: "numeric", year: "numeric" }),
-          t.customerName,
-          t.zone,
-          t.plan,
-          t.installationType,
-          t.currency,
-          t.subscriptionAmount.toFixed(2),
-          t.paymentMethod,
-        ];
-      }),
+      head: [["Fecha", "Cliente", "Zona", "Plan", "Tipo", "Moneda", "Monto", "Com.", "Pago"]],
+      body: txRows,
       margin: { left: 14, right: 14 },
       theme: "grid",
       headStyles: { fillColor: [41, 128, 185], fontSize: 8 },
       styles: { fontSize: 7, cellPadding: 2 },
       columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 30 },
+        0: { cellWidth: 20 },
+        1: { cellWidth: 28 },
+        7: { cellWidth: 28 },
+      },
+      didParseCell(hookData) {
+        if (hookData.section === "body" && hookData.row.index === txRows.length - 1) {
+          hookData.cell.styles.fontStyle = "bold";
+          hookData.cell.styles.fillColor = [240, 240, 240];
+        }
       },
     });
   }
@@ -181,9 +205,10 @@ interface WeeklySummaryData {
   installerCommissionBCV: number;
   sellers: {
     sellerName: string;
-    totalSales: number;
-    freeCount: number;
-    paidCount: number;
+    freeCountUSD: number;
+    freeCountBCV: number;
+    paidCountUSD: number;
+    paidCountBCV: number;
     commissionUSD: number;
     commissionBCV: number;
   }[];
@@ -209,12 +234,13 @@ export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
   y += 10;
 
   // Totals
-  let totalSales = 0, totalFree = 0, totalPaid = 0;
+  let totalFreeUSD = 0, totalFreeBCV = 0, totalPaidUSD = 0, totalPaidBCV = 0;
   let totalCommUSD = 0, totalCommBCV = 0;
   for (const s of data.sellers) {
-    totalSales += s.totalSales;
-    totalFree += s.freeCount;
-    totalPaid += s.paidCount;
+    totalFreeUSD += s.freeCountUSD;
+    totalFreeBCV += s.freeCountBCV;
+    totalPaidUSD += s.paidCountUSD;
+    totalPaidBCV += s.paidCountBCV;
     totalCommUSD += s.commissionUSD;
     totalCommBCV += s.commissionBCV;
   }
@@ -225,8 +251,6 @@ export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
   y += 7;
 
   doc.setFontSize(10);
-  doc.text(`Ventas: ${totalSales}    |    Gratis: ${totalFree}    |    Pagadas: ${totalPaid}`, 14, y);
-  y += 6;
   doc.text(`Com. Vendedores USD: $${totalCommUSD.toFixed(2)}    |    Com. Vendedores BCV: $${totalCommBCV.toFixed(2)}`, 14, y);
   y += 6;
   if (data.bcvRate > 0 && totalCommBCV > 0) {
@@ -259,37 +283,36 @@ export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
   doc.text("Detalle por Vendedor", 14, y);
   y += 2;
 
-  const head = data.bcvRate > 0
-    ? [["Vendedor", "Ventas", "Gratis", "Pagadas", "Com. USD", "Com. BCV", "Com. BCV (Bs)"]]
-    : [["Vendedor", "Ventas", "Gratis", "Pagadas", "Com. USD", "Com. BCV"]];
+  const hasBcvRate = data.bcvRate > 0;
+  const head = hasBcvRate
+    ? [["Vendedor", "Gratis USD", "Gratis BCV", "Pagas USD", "Pagas BCV", "Com. USD", "Com. BCV", "Com. BCV (Bs)"]]
+    : [["Vendedor", "Gratis USD", "Gratis BCV", "Pagas USD", "Pagas BCV", "Com. USD", "Com. BCV"]];
 
   const body = data.sellers.map((s) => {
     const row = [
       s.sellerName,
-      String(s.totalSales),
-      String(s.freeCount),
-      String(s.paidCount),
+      String(s.freeCountUSD),
+      String(s.freeCountBCV),
+      String(s.paidCountUSD),
+      String(s.paidCountBCV),
       `$${s.commissionUSD.toFixed(2)}`,
       `$${s.commissionBCV.toFixed(2)}`,
     ];
-    if (data.bcvRate > 0) {
-      row.push(`${(s.commissionBCV * data.bcvRate).toFixed(2)} Bs`);
-    }
+    if (hasBcvRate) row.push(`${(s.commissionBCV * data.bcvRate).toFixed(2)} Bs`);
     return row;
   });
 
   // Totals row
   const totalsRow = [
     "TOTAL",
-    String(totalSales),
-    String(totalFree),
-    String(totalPaid),
+    String(totalFreeUSD),
+    String(totalFreeBCV),
+    String(totalPaidUSD),
+    String(totalPaidBCV),
     `$${totalCommUSD.toFixed(2)}`,
     `$${totalCommBCV.toFixed(2)}`,
   ];
-  if (data.bcvRate > 0) {
-    totalsRow.push(`${(totalCommBCV * data.bcvRate).toFixed(2)} Bs`);
-  }
+  if (hasBcvRate) totalsRow.push(`${(totalCommBCV * data.bcvRate).toFixed(2)} Bs`);
   body.push(totalsRow);
 
   autoTable(doc, {
@@ -301,7 +324,6 @@ export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
     headStyles: { fillColor: [41, 128, 185], fontSize: 9 },
     styles: { fontSize: 9, cellPadding: 2.5 },
     didParseCell(hookData) {
-      // Bold the totals row
       if (hookData.section === "body" && hookData.row.index === body.length - 1) {
         hookData.cell.styles.fontStyle = "bold";
         hookData.cell.styles.fillColor = [240, 240, 240];
