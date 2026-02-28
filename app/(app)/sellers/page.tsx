@@ -15,6 +15,7 @@ import { getAllSellers, getSellerDetail, generateSellerReport, getAllAvailableWe
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Users, ChevronLeft, ChevronRight, FileText, Download, Loader2, Plus, Pencil } from "lucide-react";
+import { toast } from "sonner";
 
 type SellerRow = Awaited<ReturnType<typeof getAllSellers>>[number];
 type SellerDetailData = Awaited<ReturnType<typeof getSellerDetail>>;
@@ -195,6 +196,9 @@ export default function SellersPage() {
       a.download = `${reportData.sellerName}_${selectedWeek.label.replace(/\s/g, "_")}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+      toast.success("Reporte descargado correctamente");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al generar reporte");
     } finally {
       setPdfLoading(false);
     }
@@ -230,9 +234,10 @@ export default function SellersPage() {
         if (sellerRuleId !== null) await assignRuleToSeller(newId, sellerRuleId);
       }
       setSellerDialogOpen(false);
+      toast.success(editingSeller ? "Vendedor actualizado correctamente" : "Vendedor creado correctamente");
       loadSellers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar vendedor");
+      toast.error(err instanceof Error ? err.message : "Error al guardar vendedor");
     } finally {
       setSellerSaving(false);
     }

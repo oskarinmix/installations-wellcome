@@ -15,6 +15,7 @@ import {
 } from "@/lib/actions";
 import { getAvailableWeeks, getLastCompleteWeek, type WeekRange } from "@/lib/week-utils";
 import { FileText, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type SellerSummary = { id: number; name: string; salesCount: number };
 
@@ -71,8 +72,9 @@ export default function ReportsPage() {
         "application/pdf",
         `${seller.name.replace(/[^a-zA-Z0-9_-]/g, "_")}_${selectedWeek.label.replace(/\s/g, "_")}.pdf`
       );
+      toast.success(`Reporte de ${seller.name} descargado`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al generar reporte");
+      toast.error(err instanceof Error ? err.message : "Error al generar reporte");
     } finally {
       setPdfLoading(null);
     }
@@ -92,8 +94,9 @@ export default function ReportsPage() {
         "application/pdf",
         `All_Sellers_${selectedWeek.label.replace(/\s/g, "_")}.pdf`
       );
+      toast.success("Reportes descargados correctamente");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al generar reportes");
+      toast.error(err instanceof Error ? err.message : "Error al generar reportes");
     } finally {
       setZipLoading(false);
     }

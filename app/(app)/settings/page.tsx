@@ -13,6 +13,7 @@ import {
 import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole, getAllUsers, updateUserRole, getCommissionRules, createCommissionRule, updateCommissionRule, deleteCommissionRule } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Package, Settings2, Users, Sliders } from "lucide-react";
+import { toast } from "sonner";
 
 type Plan = { id: number; name: string; price: number };
 
@@ -127,8 +128,9 @@ export default function SettingsPage() {
     try {
       await updateUserRole(userId, newRole);
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
+      toast.success("Rol actualizado correctamente");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al actualizar rol");
+      toast.error(err instanceof Error ? err.message : "Error al actualizar rol");
     } finally {
       setRoleUpdating(null);
     }
@@ -159,9 +161,10 @@ export default function SettingsPage() {
         await createPlan(planName, Number(planPrice));
       }
       setDialogOpen(false);
+      toast.success(editingPlan ? "Plan actualizado correctamente" : "Plan creado correctamente");
       loadPlans();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar plan");
+      toast.error(err instanceof Error ? err.message : "Error al guardar plan");
     } finally {
       setSaving(false);
     }
@@ -173,9 +176,10 @@ export default function SettingsPage() {
     try {
       await deletePlan(deleteTarget.id);
       setDeleteTarget(null);
+      toast.success("Plan eliminado correctamente");
       loadPlans();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al eliminar plan");
+      toast.error(err instanceof Error ? err.message : "Error al eliminar plan");
     } finally {
       setDeleting(false);
     }
@@ -214,9 +218,10 @@ export default function SettingsPage() {
         await createCommissionRule(ruleForm);
       }
       setRuleDialogOpen(false);
+      toast.success(editingRule ? "Regla actualizada correctamente" : "Regla creada correctamente");
       loadRules();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar regla");
+      toast.error(err instanceof Error ? err.message : "Error al guardar regla");
     } finally {
       setRuleSaving(false);
     }
@@ -228,9 +233,10 @@ export default function SettingsPage() {
     try {
       await deleteCommissionRule(deleteRuleTarget.id);
       setDeleteRuleTarget(null);
+      toast.success("Regla eliminada correctamente");
       loadRules();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al eliminar regla");
+      toast.error(err instanceof Error ? err.message : "Error al eliminar regla");
     } finally {
       setDeletingRule(false);
     }
@@ -707,9 +713,10 @@ export default function SettingsPage() {
               try {
                 await updateCommissionConfig(commForm);
                 setCommDialogOpen(false);
+                toast.success("Configuración guardada correctamente");
                 loadCommConfig();
               } catch (err) {
-                alert(err instanceof Error ? err.message : "Error al guardar configuración");
+                toast.error(err instanceof Error ? err.message : "Error al guardar configuración");
               } finally {
                 setCommSaving(false);
               }

@@ -33,7 +33,8 @@
       "Bash(npm uninstall:*)",
       "WebFetch(domain:bcv-api.rafnixg.dev)",
       "Bash(npx tsc:*)",
-      "Bash(echo exit:$?:*)"
+      "Bash(echo exit:$?:*)",
+      "Bash(cat:*)"
     ]
   }
 }

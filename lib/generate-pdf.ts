@@ -285,16 +285,18 @@ export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
 
   const hasBcvRate = data.bcvRate > 0;
   const head = hasBcvRate
-    ? [["Vendedor", "Gratis USD", "Gratis BCV", "Pagas USD", "Pagas BCV", "Com. USD", "Com. BCV", "Com. BCV (Bs)"]]
-    : [["Vendedor", "Gratis USD", "Gratis BCV", "Pagas USD", "Pagas BCV", "Com. USD", "Com. BCV"]];
+    ? [["Vendedor", "Gratis USD", "Gratis BCV", "Pagas USD", "Pagas BCV", "Total", "Com. USD", "Com. BCV", "Com. BCV (Bs)"]]
+    : [["Vendedor", "Gratis USD", "Gratis BCV", "Pagas USD", "Pagas BCV", "Total", "Com. USD", "Com. BCV"]];
 
   const body = data.sellers.map((s) => {
+    const total = s.freeCountUSD + s.freeCountBCV + s.paidCountUSD + s.paidCountBCV;
     const row = [
       s.sellerName,
       String(s.freeCountUSD),
       String(s.freeCountBCV),
       String(s.paidCountUSD),
       String(s.paidCountBCV),
+      String(total),
       `$${s.commissionUSD.toFixed(2)}`,
       `$${s.commissionBCV.toFixed(2)}`,
     ];
@@ -303,12 +305,14 @@ export function generateWeeklySummaryPdf(data: WeeklySummaryData): Buffer {
   });
 
   // Totals row
+  const grandTotal = totalFreeUSD + totalFreeBCV + totalPaidUSD + totalPaidBCV;
   const totalsRow = [
     "TOTAL",
     String(totalFreeUSD),
     String(totalFreeBCV),
     String(totalPaidUSD),
     String(totalPaidBCV),
+    String(grandTotal),
     `$${totalCommUSD.toFixed(2)}`,
     `$${totalCommBCV.toFixed(2)}`,
   ];

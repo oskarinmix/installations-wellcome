@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { PAYMENT_METHODS, currencyFromPaymentMethod } from "@/lib/payment-methods";
+import { toast } from "sonner";
 
 type Installation = Awaited<ReturnType<typeof getAllInstallations>>[number];
 type SortKey = "transactionDate" | "customerName" | "sellerName" | "zone" | "plan" | "subscriptionAmount" | "installationType" | "currency" | "paymentMethod";
@@ -242,10 +243,11 @@ export default function InstallationsPage() {
     try {
       await deleteInstallation(deleteTarget.id);
       setDeleteTarget(null);
+      toast.success("Instalación eliminada correctamente");
       loadData();
       getGlobalFilterOptions().then(setFilterOptions);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al eliminar la instalación");
+      toast.error(err instanceof Error ? err.message : "Error al eliminar la instalación");
     } finally {
       setDeleting(false);
     }
@@ -256,7 +258,7 @@ export default function InstallationsPage() {
     setSubmitting(true);
 
     if (!form.paymentMethod) {
-      alert("Debe seleccionar un método de pago.");
+      toast.error("Debe seleccionar un método de pago.");
       setSubmitting(false);
       return;
     }
@@ -286,10 +288,11 @@ export default function InstallationsPage() {
       setDialogOpen(false);
       setEditingId(null);
       setForm({ ...emptyForm, transactionDate: new Date().toISOString().slice(0, 10) });
+      toast.success(editingId ? "Instalación actualizada correctamente" : "Instalación creada correctamente");
       loadData();
       getGlobalFilterOptions().then(setFilterOptions);
     } catch (err) {
-      alert(err instanceof Error ? err.message : editingId ? "Error al actualizar la instalación" : "Error al crear la instalación");
+      toast.error(err instanceof Error ? err.message : editingId ? "Error al actualizar la instalación" : "Error al crear la instalación");
     } finally {
       setSubmitting(false);
     }
@@ -369,8 +372,9 @@ export default function InstallationsPage() {
       a.download = `Resumen_Semanal_${week.label.replace(/\s/g, "_")}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+      toast.success("Resumen semanal descargado correctamente");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al generar resumen");
+      toast.error(err instanceof Error ? err.message : "Error al generar resumen");
     } finally {
       setSummaryLoading(false);
     }
