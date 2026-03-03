@@ -361,12 +361,12 @@ export default function InstallationsPage() {
     if (!startDate || !endDate) return;
     setCustomSummaryLoading(true);
     try {
-      const startIso = new Date(startDate + "T00:00:00.000Z").toISOString();
-      const endIso = new Date(endDate + "T23:59:59.999Z").toISOString();
-      const fmt = (d: string) =>
-        new Date(d).toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" });
+      const fmt = (d: string) => {
+        const [y, m, day] = d.split("-");
+        return `${day}/${m}/${y}`;
+      };
       const label = `${fmt(startDate)} – ${fmt(endDate)}`;
-      const base64 = await generateWeeklySummary(startIso, endIso, label);
+      const base64 = await generateWeeklySummary(startDate, endDate, label);
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);

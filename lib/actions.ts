@@ -891,11 +891,14 @@ export async function generateWeeklySummary(
   const config = await getCommissionConfig();
   const bcv = await getBcvRate(true);
 
+  const toStart = (s: string) => new Date(s.length === 10 ? s + "T00:00:00.000Z" : s);
+  const toEnd   = (s: string) => new Date(s.length === 10 ? s + "T23:59:59.999Z" : s);
+
   const sellersRaw = await prisma.seller.findMany({
     include: {
       sales: {
         where: {
-          transactionDate: { gte: new Date(weekStart), lte: new Date(weekEnd) },
+          transactionDate: { gte: toStart(weekStart), lte: toEnd(weekEnd) },
         },
         include: { planRef: { select: { price: true } } },
       },
@@ -978,8 +981,8 @@ export async function getAllInstallations(filters: InstallationsFilters) {
 
   if (filters.startDate || filters.endDate) {
     const dateFilter: Record<string, Date> = {};
-    if (filters.startDate) dateFilter.gte = new Date(filters.startDate);
-    if (filters.endDate) dateFilter.lte = new Date(filters.endDate);
+    if (filters.startDate) dateFilter.gte = new Date(filters.startDate + "T00:00:00.000Z");
+    if (filters.endDate) dateFilter.lte = new Date(filters.endDate + "T23:59:59.999Z");
     where.transactionDate = dateFilter;
   }
 
