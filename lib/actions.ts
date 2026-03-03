@@ -10,8 +10,8 @@ import { getUserRole } from "./get-user-role";
 let cachedBcvRate: { rate: number; fetchedAt: number } | null = null;
 const BCV_CACHE_MS = 10 * 60 * 1000; // 10 minutes
 
-export async function getBcvRate(): Promise<{ rate: number; date: string }> {
-  if (cachedBcvRate && Date.now() - cachedBcvRate.fetchedAt < BCV_CACHE_MS) {
+export async function getBcvRate(forceRefresh = false): Promise<{ rate: number; date: string }> {
+  if (!forceRefresh && cachedBcvRate && Date.now() - cachedBcvRate.fetchedAt < BCV_CACHE_MS) {
     return { rate: cachedBcvRate.rate, date: new Date().toISOString().slice(0, 10) };
   }
   try {
@@ -889,7 +889,7 @@ export async function generateWeeklySummary(
   const { generateWeeklySummaryPdf } = await import("./generate-pdf");
 
   const config = await getCommissionConfig();
-  const bcv = await getBcvRate();
+  const bcv = await getBcvRate(true);
 
   const sellersRaw = await prisma.seller.findMany({
     include: {
@@ -939,7 +939,7 @@ export async function generateWeeklySummary(
     })
     .sort((a, b) => (b.freeCountUSD + b.freeCountBCV + b.paidCountUSD + b.paidCountBCV) - (a.freeCountUSD + a.freeCountBCV + a.paidCountUSD + a.paidCountBCV));
 
-  if (sellers.length === 0) throw new Error("No hay vendedores con ventas en esta semana");
+  if (sellers.length === 0) throw new Error("No hay ventas en el período seleccionado");
 
   const pdfBuffer = generateWeeklySummaryPdf({
     weekLabel,

@@ -101,6 +101,9 @@ export default function InstallationsPage() {
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
 
+  // Custom range summary
+  const [customSummaryLoading, setCustomSummaryLoading] = useState(false);
+
   useEffect(() => {
     getCurrentUserRole().then((res) => setRole(res?.role ?? null));
     getGlobalFilterOptions().then(setFilterOptions);
@@ -353,6 +356,33 @@ export default function InstallationsPage() {
     doc.save(`instalaciones_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
+  const handleDownloadCustomSummary = async () => {
+    const { startDate, endDate } = filters;
+    if (!startDate || !endDate) return;
+    setCustomSummaryLoading(true);
+    try {
+      const startIso = new Date(startDate + "T00:00:00.000Z").toISOString();
+      const endIso = new Date(endDate + "T23:59:59.999Z").toISOString();
+      const fmt = (d: string) =>
+        new Date(d).toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" });
+      const label = `${fmt(startDate)} – ${fmt(endDate)}`;
+      const base64 = await generateWeeklySummary(startIso, endIso, label);
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Resumen_${startDate}_${endDate}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Resumen descargado correctamente");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al generar resumen");
+    } finally {
+      setCustomSummaryLoading(false);
+    }
+  };
+
   const handleDownloadSummary = async () => {
     if (!selectedWeek) return;
     const week = weeks.find((w) => w.start.toISOString() === selectedWeek);
@@ -388,15 +418,28 @@ export default function InstallationsPage() {
         </h1>
         <div className="flex items-center gap-2">
           {role === "admin" && (
-            <Button
-              variant="outline"
-              className="gap-1.5"
-              onClick={handleDownloadSummary}
-              disabled={!selectedWeek || summaryLoading}
-            >
-              {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-              {summaryLoading ? "Generando..." : "Resumen Semanal"}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="gap-1.5"
+                onClick={handleDownloadSummary}
+                disabled={!selectedWeek || summaryLoading}
+              >
+                {summaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                {summaryLoading ? "Generando..." : "Resumen Semanal"}
+              </Button>
+              {filters.startDate && filters.endDate && (
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={handleDownloadCustomSummary}
+                  disabled={customSummaryLoading}
+                >
+                  {customSummaryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                  {customSummaryLoading ? "Generando..." : "Resumen Personalizado"}
+                </Button>
+              )}
+            </>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
