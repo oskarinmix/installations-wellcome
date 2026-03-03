@@ -101,6 +101,15 @@ model CommissionConfig {
   installerPaidPercentage Float @default(0.7)
 }
 
+model BcvRate {
+  id            Int      @id @default(autoincrement())
+  rate          Float
+  effectiveDate DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([effectiveDate])
+}
+
 model User {
   id            String    @id
   name          String

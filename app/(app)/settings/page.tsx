@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole, getAllUsers, updateUserRole, getCommissionRules, createCommissionRule, updateCommissionRule, deleteCommissionRule } from "@/lib/actions";
+import { getPlanPrices, createPlan, updatePlan, deletePlan, getCommissionConfig, updateCommissionConfig, getCurrentUserRole, getAllUsers, updateUserRole, getCommissionRules, createCommissionRule, updateCommissionRule, deleteCommissionRule, getBcvRate, setBcvRate, getBcvRateHistory, deleteBcvRate } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Package, Settings2, Users, Sliders } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Settings2, Users, Sliders, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 type Plan = { id: number; name: string; price: number };
@@ -82,6 +82,15 @@ export default function SettingsPage() {
   const [deleteRuleTarget, setDeleteRuleTarget] = useState<CommissionRule | null>(null);
   const [deletingRule, setDeletingRule] = useState(false);
 
+  // BCV Rate state
+  type BcvRateRow = { id: number; rate: number; effectiveDate: Date; createdAt: Date };
+  const [bcvCurrent, setBcvCurrent] = useState<{ rate: number; date: string } | null>(null);
+  const [bcvHistory, setBcvHistory] = useState<BcvRateRow[]>([]);
+  const [bcvRateInput, setBcvRateInput] = useState("");
+  const [bcvDateInput, setBcvDateInput] = useState(new Date().toISOString().slice(0, 10));
+  const [bcvSaving, setBcvSaving] = useState(false);
+  const [deletingBcvId, setDeletingBcvId] = useState<number | null>(null);
+
   // Users state
   type UserRow = { id: string; name: string; email: string; role: "admin" | "agent"; createdAt: Date };
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -104,6 +113,12 @@ export default function SettingsPage() {
     setRules(data as CommissionRule[]);
   }, []);
 
+  const loadBcv = useCallback(async () => {
+    const [current, history] = await Promise.all([getBcvRate(), getBcvRateHistory()]);
+    setBcvCurrent(current);
+    setBcvHistory(history as BcvRateRow[]);
+  }, []);
+
   const loadUsers = useCallback(async () => {
     const data = await getAllUsers();
     setUsers(data);
@@ -120,8 +135,39 @@ export default function SettingsPage() {
     loadPlans();
     loadCommConfig();
     loadRules();
+    loadBcv();
     loadUsers();
-  }, [loadPlans, loadCommConfig, loadRules, loadUsers, router]);
+  }, [loadPlans, loadCommConfig, loadRules, loadBcv, loadUsers, router]);
+
+  const handleSetBcvRate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const rate = Number(bcvRateInput);
+    if (!rate || !bcvDateInput) return;
+    setBcvSaving(true);
+    try {
+      await setBcvRate(rate, bcvDateInput);
+      setBcvRateInput("");
+      toast.success("Tasa BCV guardada correctamente");
+      loadBcv();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al guardar tasa BCV");
+    } finally {
+      setBcvSaving(false);
+    }
+  };
+
+  const handleDeleteBcvRate = async (id: number) => {
+    setDeletingBcvId(id);
+    try {
+      await deleteBcvRate(id);
+      toast.success("Registro eliminado");
+      loadBcv();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar registro");
+    } finally {
+      setDeletingBcvId(null);
+    }
+  };
 
   const handleRoleChange = async (userId: string, newRole: "admin" | "agent") => {
     setRoleUpdating(userId);
@@ -250,6 +296,97 @@ export default function SettingsPage() {
       <h1 className="text-3xl font-bold flex items-center gap-3">
         <span>⚙️</span> Configuración
       </h1>
+
+      {/* BCV Rate Section */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Tasa BCV
+            {bcvCurrent && bcvCurrent.rate > 0 && (
+              <span className="ml-auto text-sm font-normal text-muted-foreground">
+                Tasa actual: <strong className="text-foreground">{bcvCurrent.rate.toFixed(2)} Bs/$</strong>
+                <span className="ml-2 text-xs">({bcvCurrent.date})</span>
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Set new rate form */}
+          <form onSubmit={handleSetBcvRate} className="flex flex-wrap gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Tasa (Bs/$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="ej. 97.50"
+                value={bcvRateInput}
+                onChange={(e) => setBcvRateInput(e.target.value)}
+                className="w-40"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Fecha de Vigencia</Label>
+              <Input
+                type="date"
+                value={bcvDateInput}
+                onChange={(e) => setBcvDateInput(e.target.value)}
+                className="w-44"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={bcvSaving} size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              {bcvSaving ? "Guardando..." : "Registrar Tasa"}
+            </Button>
+          </form>
+
+          {/* History table */}
+          {bcvHistory.length > 0 && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha de Vigencia</TableHead>
+                    <TableHead className="text-right">Tasa (Bs/$)</TableHead>
+                    <TableHead>Registrado</TableHead>
+                    <TableHead className="w-16 text-center">Eliminar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bcvHistory.map((row, i) => (
+                    <TableRow key={row.id} className={i === 0 ? "bg-amber-50 dark:bg-amber-950/20 font-medium" : ""}>
+                      <TableCell>
+                        {new Date(row.effectiveDate).toLocaleDateString("es", { day: "2-digit", month: "long", year: "numeric" })}
+                        {i === 0 && <span className="ml-2 text-[10px] bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded px-1 py-0.5">Actual</span>}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{row.rate.toFixed(2)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(row.createdAt).toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <button
+                          onClick={() => handleDeleteBcvRate(row.id)}
+                          disabled={deletingBcvId === row.id}
+                          className="inline-flex items-center justify-center rounded-md p-1.5 transition-colors hover:bg-red-100 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 disabled:opacity-40"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {bcvHistory.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No hay tasas registradas aún.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Plans Section */}
       <Card className="shadow-sm">

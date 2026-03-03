@@ -7,22 +7,37 @@ import { getUserRole } from "./get-user-role";
 
 // ── BCV Rate ──
 
-let cachedBcvRate: { rate: number; fetchedAt: number } | null = null;
-const BCV_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+export async function getBcvRate(): Promise<{ rate: number; date: string }> {
+  const latest = await prisma.bcvRate.findFirst({
+    orderBy: { effectiveDate: "desc" },
+  });
+  if (!latest) return { rate: 0, date: "" };
+  return {
+    rate: latest.rate,
+    date: latest.effectiveDate.toISOString().slice(0, 10),
+  };
+}
 
-export async function getBcvRate(forceRefresh = false): Promise<{ rate: number; date: string }> {
-  if (!forceRefresh && cachedBcvRate && Date.now() - cachedBcvRate.fetchedAt < BCV_CACHE_MS) {
-    return { rate: cachedBcvRate.rate, date: new Date().toISOString().slice(0, 10) };
-  }
-  try {
-    const res = await fetch("https://bcv-api.rafnixg.dev/rates/", { next: { revalidate: 600 } });
-    if (!res.ok) throw new Error("BCV API error");
-    const data = await res.json();
-    cachedBcvRate = { rate: data.dollar, fetchedAt: Date.now() };
-    return { rate: data.dollar, date: data.date };
-  } catch {
-    return { rate: cachedBcvRate?.rate ?? 0, date: "" };
-  }
+export async function setBcvRate(rate: number, effectiveDate: string) {
+  await requireAdmin();
+  await prisma.bcvRate.create({
+    data: {
+      rate,
+      effectiveDate: new Date(effectiveDate + "T12:00:00.000Z"),
+    },
+  });
+}
+
+export async function getBcvRateHistory() {
+  await requireAdmin();
+  return prisma.bcvRate.findMany({
+    orderBy: { effectiveDate: "desc" },
+  });
+}
+
+export async function deleteBcvRate(id: number) {
+  await requireAdmin();
+  await prisma.bcvRate.delete({ where: { id } });
 }
 
 // ── Role Helpers ──
@@ -889,7 +904,7 @@ export async function generateWeeklySummary(
   const { generateWeeklySummaryPdf } = await import("./generate-pdf");
 
   const config = await getCommissionConfig();
-  const bcv = await getBcvRate(true);
+  const bcv = await getBcvRate();
 
   const toStart = (s: string) => new Date(s.length === 10 ? s + "T00:00:00.000Z" : s);
   const toEnd   = (s: string) => new Date(s.length === 10 ? s + "T23:59:59.999Z" : s);
