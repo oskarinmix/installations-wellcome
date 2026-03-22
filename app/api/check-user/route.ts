@@ -8,8 +8,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const baseUrl =
+      process.env.CONSULTA_API_URL ?? "https://cliente.protelecom.com.ve";
+
     const res = await fetch(
-      `https://cliente.protelecom.com.ve/consulta/${encodeURIComponent(cedula)}?q=all`,
+      `${baseUrl}/consulta/${encodeURIComponent(cedula)}?q=all`,
       { headers: { Accept: "application/json" } }
     );
 
