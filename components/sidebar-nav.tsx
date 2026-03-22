@@ -18,6 +18,7 @@ import {
   LogOut,
   Menu,
   X,
+  UserSearch,
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/installations", label: "Instalaciones", icon: Wrench },
   { href: "/sellers", label: "Vendedores", icon: Users, adminOnly: true },
   { href: "/reports", label: "Reportes", icon: FileText, adminOnly: true },
+  { href: "/check-user", label: "Consultar Cliente", icon: UserSearch, adminOnly: true },
   { href: "/settings", label: "Configuración", icon: Settings, adminOnly: true },
 ];
 
