@@ -4,6 +4,31 @@ import { useState } from "react";
 import { Search, User, Phone, MapPin, Calendar, Wifi, CreditCard, AlertCircle, Loader2 } from "lucide-react";
 
 interface ClienteData {
+  cedula?: string;
+  nombre?: string;
+  apellido?: string;
+  telefono?: string;
+  celular?: string;
+  email?: string;
+  direccion?: string;
+  municipio?: string;
+  estado?: string;
+  zona?: string;
+  plan?: string;
+  servicio?: string;
+  status?: string;
+  estado_servicio?: string;
+  fecha_instalacion?: string;
+  fecha_registro?: string;
+  fecha_vencimiento?: string;
+  ultimo_pago?: string;
+  monto?: string | number;
+  ip?: string;
+  mac?: string;
+  router?: string;
+  contrato?: string;
+  referencia?: string;
+  name?: string;
   [key: string]: unknown;
 }
 
