@@ -136,15 +136,15 @@ function resolveCommissions(
 ): { sellerComm: number; installerComm: number } {
   if (rule) {
     const sType = installationType === "FREE" ? rule.sellerFreeType : rule.sellerPaidType;
-    const sVal  = installationType === "FREE" ? rule.sellerFreeValue : rule.sellerPaidValue;
+    const sVal = installationType === "FREE" ? rule.sellerFreeValue : rule.sellerPaidValue;
     const iType = installationType === "FREE" ? rule.installerFreeType : rule.installerPaidType;
-    const iVal  = installationType === "FREE" ? rule.installerFreeValue : rule.installerPaidValue;
+    const iVal = installationType === "FREE" ? rule.installerFreeValue : rule.installerPaidValue;
     return {
-      sellerComm:    sType === "FIXED" ? sVal : planPrice * sVal,
+      sellerComm: sType === "FIXED" ? sVal : planPrice * sVal,
       installerComm: iType === "FIXED" ? iVal : planPrice * iVal,
     };
   }
-  const sellerComm    = installationType === "FREE" ? config.sellerFreeCommission : config.sellerPaidCommission;
+  const sellerComm = installationType === "FREE" ? config.sellerFreeCommission : config.sellerPaidCommission;
   const installerComm = installationType === "FREE"
     ? planPrice * config.installerFreePercentage
     : planPrice * config.installerPaidPercentage;
@@ -907,7 +907,7 @@ export async function generateWeeklySummary(
   const bcv = await getBcvRate();
 
   const toStart = (s: string) => new Date(s.length === 10 ? s + "T00:00:00.000Z" : s);
-  const toEnd   = (s: string) => new Date(s.length === 10 ? s + "T23:59:59.999Z" : s);
+  const toEnd = (s: string) => new Date(s.length === 10 ? s + "T23:59:59.999Z" : s);
 
   const sellersRaw = await prisma.seller.findMany({
     include: {
@@ -937,13 +937,13 @@ export async function generateWeeklySummary(
           config
         );
         const isFree = sale.installationType === "FREE";
-        const isUSD  = sale.currency === "USD";
-        if (isFree && isUSD)   freeCountUSD++;
-        if (isFree && !isUSD)  freeCountBCV++;
-        if (!isFree && isUSD)  paidCountUSD++;
+        const isUSD = sale.currency === "USD";
+        if (isFree && isUSD) freeCountUSD++;
+        if (isFree && !isUSD) freeCountBCV++;
+        if (!isFree && isUSD) paidCountUSD++;
         if (!isFree && !isUSD) paidCountBCV++;
         if (isUSD) { commissionUSD += sellerComm; totalInstallerCommUSD += installerComm; }
-        else       { commissionBCV += sellerComm; totalInstallerCommBCV += installerComm; }
+        else { commissionBCV += sellerComm; totalInstallerCommBCV += installerComm; }
       }
       return {
         sellerName: s.name,
@@ -1204,4 +1204,25 @@ export async function updateInstallation(
 export async function deleteInstallation(id: number) {
   await requireAdmin();
   await prisma.sale.delete({ where: { id } });
+}
+
+export async function consultarCliente(cedula: string): Promise<{ data?: unknown; error?: string; notFound?: boolean }> {
+  const baseUrl = process.env.CONSULTA_API_URL || "https://cliente.protelecom.com.ve";
+  try {
+    const res = await fetch(
+      `${baseUrl}/consulta/${encodeURIComponent(cedula)}?q=all`,
+      { headers: { Accept: "application/json" }, cache: "no-store" }
+    );
+    if (res.status === 404) {
+      return { notFound: true };
+    }
+    if (!res.ok) {
+      return { error: `El servidor externo respondió con error ${res.status}.` };
+    }
+    const data = await res.json();
+    return { data };
+  } catch (error: any) {
+    console.error("Error al consultar cliente:", error?.message || error);
+    return { error: "No se pudo conectar con el servidor externo." };
+  }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, User, Phone, MapPin, Calendar, Wifi, CreditCard, AlertCircle, Loader2 } from "lucide-react";
+import { consultarCliente } from "@/lib/actions";
 
 interface Servicios {
   ip?: string;
@@ -89,6 +90,7 @@ export default function CheckUserPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ClienteData | ClienteData[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -98,20 +100,17 @@ export default function CheckUserPage() {
     setLoading(true);
     setError(null);
     setData(null);
+    setNotFound(false);
 
-    try {
-      const res = await fetch(`/api/check-user?cedula=${encodeURIComponent(trimmed)}`);
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json?.error ?? "Error al consultar el cliente.");
-      } else {
-        setData(json);
-      }
-    } catch {
-      setError("No se pudo conectar con el servidor.");
-    } finally {
-      setLoading(false);
+    const { data: result, error: err, notFound: nf } = await consultarCliente(trimmed);
+    if (nf) {
+      setNotFound(true);
+    } else if (err) {
+      setError(err);
+    } else {
+      setData(result as ClienteData | ClienteData[]);
     }
+    setLoading(false);
   }
 
   const records: ClienteData[] = data
@@ -216,10 +215,11 @@ export default function CheckUserPage() {
         </div>
       ))}
 
-      {/* No results */}
-      {!loading && data !== null && records.length === 0 && (
-        <div className="text-center py-10 text-muted-foreground text-sm">
-          No se encontraron resultados para esa cédula.
+      {/* Not found */}
+      {notFound && (
+        <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground text-sm">
+          <User className="h-8 w-8 opacity-30" />
+          <p>No se encontró ningún cliente con la cédula <span className="font-medium text-foreground">{cedula}</span>.</p>
         </div>
       )}
     </div>
