@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { Search, User, Phone, MapPin, Calendar, Wifi, CreditCard, AlertCircle, Loader2 } from "lucide-react";
 
+interface Servicios {
+  ip?: string;
+  costo?: string | number;
+  [key: string]: unknown;
+}
+
 interface ClienteData {
   cedula?: string;
   nombre?: string;
@@ -29,6 +35,7 @@ interface ClienteData {
   contrato?: string;
   referencia?: string;
   name?: string;
+  servicios?: Servicios | null;
   [key: string]: unknown;
 }
 
@@ -69,6 +76,9 @@ const FIELD_LABELS: Record<string, string> = {
   router: "Router",
   contrato: "Contrato",
   referencia: "Referencia",
+  servicios: "Servicios",
+  ip: "IP",
+  costo: "Costo",
 };
 
 function formatLabel(key: string): string {
@@ -180,11 +190,30 @@ export default function CheckUserPage() {
           </div>
 
           {/* Card body */}
-          <div className="px-5 py-3 divide-y-0">
-            {Object.entries(record).map(([key, value]) => (
-              <InfoRow key={key} label={formatLabel(key)} value={value} />
-            ))}
+          <div className="px-5 py-3">
+            {Object.entries(record).map(([key, value]) => {
+              if (key === "servicios") return null; // rendered separately below
+              if (typeof value === "object" && value !== null) return null; // skip unknown nested objects
+              return <InfoRow key={key} label={formatLabel(key)} value={value} />;
+            })}
           </div>
+
+          {/* Servicios sub-section */}
+          {record.servicios && (
+            <div className="mx-5 mb-4 rounded-lg border bg-muted/20 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/40">
+                <Wifi className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Servicios
+                </span>
+              </div>
+              <div className="px-4 py-2">
+                {Object.entries(record.servicios).map(([k, v]) => (
+                  <InfoRow key={k} label={formatLabel(k)} value={v} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
