@@ -71,7 +71,6 @@ const FIELD_LABELS: Record<string, string> = {
   fecha_vencimiento: "Fecha de vencimiento",
   ultimo_pago: "Último pago",
   monto: "Monto",
-  ip: "IP",
   mac: "MAC",
   router: "Router",
   contrato: "Contrato",
