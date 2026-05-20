@@ -173,3 +173,47 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model Olt {
+  id        String   @id @default(cuid())
+  name      String
+  host      String
+  port      Int      @default(22)
+  username  String
+  password  String
+  vendor    String   @default("vsol")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  onus      Onu[]
+}
+
+model Onu {
+  id               String    @id @default(cuid())
+  oltId            String
+  olt              Olt       @relation(fields: [oltId], references: [id], onDelete: Cascade)
+  serialNumber     String
+  ponPort          String
+  onuIndex         Int
+  name             String?
+  model            String?
+  onuType          String?
+  status           String
+  distance         Int?
+  rxPowerDbm       Float?
+  txPowerDbm       Float?
+  txBiasCurrentMa  Float?
+  temperatureC     Float?
+  voltageV         Float?
+  lastSeenAt       DateTime?
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([oltId, serialNumber])
+  @@index([oltId, status])
+}
+
+model ListRefresh {
+  id          String   @id @default(cuid())
+  oltId       String   @unique
+  refreshedAt DateTime @default(now())
+  onuCount    Int
+}

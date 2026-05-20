@@ -1209,9 +1209,15 @@ export async function deleteInstallation(id: number) {
 export async function consultarCliente(cedula: string): Promise<{ data?: unknown; error?: string; notFound?: boolean }> {
   const baseUrl = process.env.CONSULTA_API_URL || "https://cliente.protelecom.com.ve";
   try {
+    // Use a custom undici dispatcher to allow self-signed certificates on
+    // internal servers while keeping all other TLS checks intact.
+    const { Agent } = await import("undici");
+    const dispatcher = new Agent({ connect: { rejectUnauthorized: false } });
+
     const res = await fetch(
       `${baseUrl}/consulta/${encodeURIComponent(cedula)}?q=all`,
-      { headers: { Accept: "application/json" }, cache: "no-store" }
+      // @ts-expect-error — dispatcher is a Node/undici extension not in the fetch types
+      { headers: { Accept: "application/json" }, cache: "no-store", dispatcher }
     );
     if (res.status === 404) {
       return { notFound: true };
@@ -1222,7 +1228,8 @@ export async function consultarCliente(cedula: string): Promise<{ data?: unknown
     const data = await res.json();
     return { data };
   } catch (error: any) {
-    console.error("Error al consultar cliente:", error?.message || error);
+    const cause = error?.cause?.message ?? error?.message ?? String(error);
+    console.error("Error al consultar cliente:", cause);
     return { error: "No se pudo conectar con el servidor externo." };
   }
 }

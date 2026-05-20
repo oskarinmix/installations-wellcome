@@ -19,6 +19,10 @@ import {
   Menu,
   X,
   UserSearch,
+  Network,
+  Server,
+  ShieldAlert,
+  ChevronDown,
 } from "lucide-react";
 
 const navItems = [
@@ -27,7 +31,13 @@ const navItems = [
   { href: "/sellers", label: "Vendedores", icon: Users, adminOnly: true },
   { href: "/reports", label: "Reportes", icon: FileText, adminOnly: true },
   { href: "/check-user", label: "Consultar Cliente", icon: UserSearch, adminOnly: true },
-  { href: "/settings", label: "Configuración", icon: Settings, adminOnly: true },
+];
+
+const oltSubItems = [
+  { href: "/olt", label: "Dashboard", exact: true },
+  { href: "/olt/olts", label: "OLTs", icon: Server },
+  { href: "/olt/onus", label: "ONUs", icon: Network },
+  { href: "/olt/onus/unauth", label: "No Autorizados", icon: ShieldAlert },
 ];
 
 export function SidebarNav() {
@@ -37,15 +47,20 @@ export function SidebarNav() {
   const { data: session } = authClient.useSession();
   const [role, setRole] = useState<"admin" | "agent" | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const oltActive = pathname === "/olt" || pathname.startsWith("/olt/");
+  const [oltOpen, setOltOpen] = useState(oltActive);
 
   useEffect(() => {
     getCurrentUserRole().then((res) => setRole(res?.role ?? null));
   }, []);
 
-  // Close drawer on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (oltActive) setOltOpen(true);
+  }, [oltActive]);
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -88,6 +103,62 @@ export function SidebarNav() {
               </Link>
             );
           })}
+
+        {role === "admin" && (
+          <div>
+            <button
+              onClick={() => setOltOpen((o) => !o)}
+              className={cn(
+                "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-accent",
+                oltActive
+                  ? "text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Network className="h-4 w-4 shrink-0" />
+              <span className="flex-1 text-left">OLT</span>
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", oltOpen && "rotate-180")} />
+            </button>
+
+            {oltOpen && (
+              <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+                {oltSubItems.map(({ href, label, icon: Icon, exact }) => {
+                  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={cn(
+                        "flex items-center gap-2.5 rounded-md px-2 py-2 text-xs font-medium transition-all hover:bg-accent",
+                        isActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {role === "admin" && (
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-accent",
+              pathname === "/settings" || pathname.startsWith("/settings/")
+                ? "bg-accent text-accent-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            Configuración
+          </Link>
+        )}
       </nav>
       <div className="p-3 border-t flex flex-col gap-1">
         {session?.user && (
