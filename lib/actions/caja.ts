@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser, getUserRole } from "@/lib/get-user-role";
+import { getAuthUser } from "@/lib/get-user-role";
 import type { CajaOperationType, CajaOperationStatus, Currency } from "@/lib/generated/prisma/client";
 
 export async function getCajaBalance(): Promise<{ usd: number; bcv: number }> {
