@@ -41,9 +41,9 @@ export function OperacionesTable({
 
   async function handleStatusChange(id: number, status: "REGISTRADO" | "CANCELADO") {
     setActionLoading(id);
-    await updateCajaStatus(id, status);
+    const result = await updateCajaStatus(id, status);
     setActionLoading(null);
-    onRefresh();
+    if (result.success) onRefresh();
   }
 
   function setFilter<K extends keyof CajaFilters>(key: K, value: CajaFilters[K]) {
