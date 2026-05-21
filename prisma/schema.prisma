@@ -197,9 +197,9 @@ model CajaOperacion {
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   createdById String
-  createdBy   User                @relation("CajaCreatedBy", fields: [createdById], references: [id])
+  createdBy   User                @relation("CajaCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   updatedById String?
-  updatedBy   User?               @relation("CajaUpdatedBy", fields: [updatedById], references: [id])
+  updatedBy   User?               @relation("CajaUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@index([currency])
   @@index([status])
