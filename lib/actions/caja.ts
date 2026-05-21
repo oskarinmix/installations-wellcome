@@ -5,18 +5,20 @@ import { getAuthUser } from "@/lib/get-user-role";
 import type { CajaOperationType, CajaOperationStatus, Currency } from "@/lib/generated/prisma/client";
 
 export async function getCajaBalance(): Promise<{ usd: number; bcv: number }> {
-  const ops = await prisma.cajaOperacion.findMany({
+  const groups = await prisma.cajaOperacion.groupBy({
+    by: ["currency", "type"],
     where: { status: { not: "CANCELADO" } },
-    select: { type: true, currency: true, amount: true },
+    _sum: { amount: true },
   });
 
   let usd = 0;
   let bcv = 0;
 
-  for (const op of ops) {
-    const sign = op.type === "DEPOSITO" ? 1 : -1;
-    if (op.currency === "USD") usd += sign * op.amount;
-    else bcv += sign * op.amount;
+  for (const g of groups) {
+    const sign = g.type === "DEPOSITO" ? 1 : -1;
+    const amount = g._sum.amount ?? 0;
+    if (g.currency === "USD") usd += sign * amount;
+    else bcv += sign * amount;
   }
 
   return { usd, bcv };
@@ -120,17 +122,19 @@ export async function updateCajaStatus(
   if (!user) return { success: false, error: "No autenticado" };
   if (user.role !== "admin") return { success: false, error: "Solo el admin puede cambiar el estado" };
 
-  const op = await prisma.cajaOperacion.findUnique({ where: { id } });
-  if (!op) return { success: false, error: "Operación no encontrada" };
-  if (op.status === "CANCELADO") return { success: false, error: "No se puede modificar una operación cancelada" };
-
-  await prisma.cajaOperacion.update({
-    where: { id },
+  const updated = await prisma.cajaOperacion.updateMany({
+    where: { id, status: { not: "CANCELADO" } },
     data: {
       status: status as CajaOperationStatus,
       updatedById: user.id,
     },
   });
+
+  if (updated.count === 0) {
+    const exists = await prisma.cajaOperacion.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return { success: false, error: "Operación no encontrada" };
+    return { success: false, error: "No se puede modificar una operación cancelada" };
+  }
 
   return { success: true };
 }
