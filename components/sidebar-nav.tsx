@@ -19,11 +19,13 @@ import {
   Menu,
   X,
   UserSearch,
+  Vault,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Panel", icon: LayoutDashboard, adminOnly: true },
   { href: "/installations", label: "Instalaciones", icon: Wrench },
+  { href: "/caja", label: "Caja", icon: Vault },
   { href: "/sellers", label: "Vendedores", icon: Users, adminOnly: true },
   { href: "/reports", label: "Reportes", icon: FileText, adminOnly: true },
   { href: "/check-user", label: "Consultar Cliente", icon: UserSearch, adminOnly: true },
