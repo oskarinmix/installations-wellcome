@@ -80,7 +80,7 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
               </button>
               <button
                 type="button"
-                onClick={() => isAdmin && setType("RETIRO")}
+                onClick={() => setType("RETIRO")}
                 disabled={!isAdmin}
                 className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   type === "RETIRO"
