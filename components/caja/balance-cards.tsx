@@ -18,11 +18,14 @@ export function BalanceCards({ usd, bcv, activeCurrency, onSelect }: BalanceCard
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card
+        role="button"
+        tabIndex={0}
         className={cn(
           "cursor-pointer transition-all hover:shadow-md",
           activeCurrency === "USD" && "ring-2 ring-blue-500"
         )}
         onClick={() => handleClick("USD")}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick("USD"); } }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -39,11 +42,14 @@ export function BalanceCards({ usd, bcv, activeCurrency, onSelect }: BalanceCard
       </Card>
 
       <Card
+        role="button"
+        tabIndex={0}
         className={cn(
           "cursor-pointer transition-all hover:shadow-md",
           activeCurrency === "BCV" && "ring-2 ring-green-500"
         )}
         onClick={() => handleClick("BCV")}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick("BCV"); } }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
