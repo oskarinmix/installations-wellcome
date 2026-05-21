@@ -28,6 +28,17 @@ enum Role {
   agent
 }
 
+enum CajaOperationType {
+  DEPOSITO
+  RETIRO
+}
+
+enum CajaOperationStatus {
+  CARGADO
+  REGISTRADO
+  CANCELADO
+}
+
 model Upload {
   id         Int      @id @default(autoincrement())
   fileName   String
@@ -121,6 +132,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  cajaCreated   CajaOperacion[] @relation("CajaCreatedBy")
+  cajaUpdated   CajaOperacion[] @relation("CajaUpdatedBy")
 
   @@unique([email])
   @@map("user")
@@ -172,4 +185,24 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model CajaOperacion {
+  id          Int                 @id @default(autoincrement())
+  type        CajaOperationType
+  status      CajaOperationStatus @default(CARGADO)
+  currency    Currency
+  amount      Float
+  description String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  createdById String
+  createdBy   User                @relation("CajaCreatedBy", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?               @relation("CajaUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([currency])
+  @@index([status])
+  @@index([createdAt])
+  @@index([type])
 }
