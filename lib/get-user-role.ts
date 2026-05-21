@@ -34,3 +34,38 @@ export async function getUserRole(): Promise<"admin" | "agent" | null> {
     return null;
   }
 }
+
+/**
+ * Reads the better-auth session cookie, looks up the session + user in DB,
+ * and returns the user's id and role or null.
+ */
+export async function getAuthUser(): Promise<{ id: string; role: "admin" | "agent" } | null> {
+  try {
+    const cookieStore = await cookies();
+
+    const rawToken =
+      cookieStore.get("better-auth.session_token")?.value ??
+      cookieStore.get("__Secure-better-auth.session_token")?.value;
+
+    if (!rawToken) return null;
+
+    const token = rawToken.split(".")[0];
+
+    const session = await prisma.session.findUnique({
+      where: { token },
+      select: {
+        expiresAt: true,
+        user: { select: { id: true, role: true } },
+      },
+    });
+
+    if (!session || session.expiresAt < new Date()) return null;
+
+    return {
+      id: session.user.id,
+      role: session.user.role as "admin" | "agent",
+    };
+  } catch {
+    return null;
+  }
+}
