@@ -73,6 +73,7 @@ export function SidebarNav() {
           .filter((item) => {
             if (item.adminOnly) return role === "admin";
             if (item.cajaOnly) return role === "admin" || role === "cashier";
+            if (role === "cashier") return false;
             return true;
           })
           .map((item) => {
