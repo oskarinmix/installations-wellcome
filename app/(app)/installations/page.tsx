@@ -98,7 +98,7 @@ export default function InstallationsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Installation | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [role, setRole] = useState<"admin" | "agent" | null>(null);
+  const [role, setRole] = useState<"admin" | "agent" | "cashier" | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
 
   // Custom range summary

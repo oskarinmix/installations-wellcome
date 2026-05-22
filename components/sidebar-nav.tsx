@@ -37,7 +37,7 @@ export function SidebarNav() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { data: session } = authClient.useSession();
-  const [role, setRole] = useState<"admin" | "agent" | null>(null);
+  const [role, setRole] = useState<"admin" | "agent" | "cashier" | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {

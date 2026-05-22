@@ -1,22 +1,16 @@
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
-/**
- * Reads the better-auth session cookie, looks up the session + user in DB,
- * and returns the user's role or null.
- */
-export async function getUserRole(): Promise<"admin" | "agent" | null> {
+export async function getUserRole(): Promise<"admin" | "agent" | "cashier" | null> {
   try {
     const cookieStore = await cookies();
 
-    // better-auth may use different cookie names depending on environment
     const rawToken =
       cookieStore.get("better-auth.session_token")?.value ??
       cookieStore.get("__Secure-better-auth.session_token")?.value;
 
     if (!rawToken) return null;
 
-    // Cookie format is "token.signature" — extract just the token part
     const token = rawToken.split(".")[0];
 
     const session = await prisma.session.findUnique({
@@ -29,17 +23,13 @@ export async function getUserRole(): Promise<"admin" | "agent" | null> {
 
     if (!session || session.expiresAt < new Date()) return null;
 
-    return session.user.role as "admin" | "agent";
+    return session.user.role as "admin" | "agent" | "cashier";
   } catch {
     return null;
   }
 }
 
-/**
- * Reads the better-auth session cookie, looks up the session + user in DB,
- * and returns the user's id and role or null.
- */
-export async function getAuthUser(): Promise<{ id: string; role: "admin" | "agent" } | null> {
+export async function getAuthUser(): Promise<{ id: string; role: "admin" | "agent" | "cashier" } | null> {
   try {
     const cookieStore = await cookies();
 
@@ -63,7 +53,7 @@ export async function getAuthUser(): Promise<{ id: string; role: "admin" | "agen
 
     return {
       id: session.user.id,
-      role: session.user.role as "admin" | "agent",
+      role: session.user.role as "admin" | "agent" | "cashier",
     };
   } catch {
     return null;

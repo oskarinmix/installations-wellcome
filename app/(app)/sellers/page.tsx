@@ -49,7 +49,7 @@ export default function SellersPage() {
   const [sellerPin, setSellerPin] = useState("");
   const [sellerRuleId, setSellerRuleId] = useState<number | null>(null);
   const [sellerSaving, setSellerSaving] = useState(false);
-  const [role, setRole] = useState<"admin" | "agent" | null>(null);
+  const [role, setRole] = useState<"admin" | "agent" | "cashier" | null>(null);
   const [bcvRate, setBcvRate] = useState<number>(0);
 
   type CommissionRuleOption = { id: number; name: string };
