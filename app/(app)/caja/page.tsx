@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { BalanceCards } from "@/components/caja/balance-cards";
 import { OperacionesTable } from "@/components/caja/operaciones-table";
 import { NuevaOperacionDialog } from "@/components/caja/nueva-operacion-dialog";
@@ -9,6 +10,7 @@ import type { CajaOperacionRow, CajaFilters } from "@/lib/actions/caja";
 import { getCurrentUserRole } from "@/lib/actions";
 
 export default function CajaPage() {
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [balance, setBalance] = useState({ usd: 0, bcv: 0 });
   const [rows, setRows] = useState<CajaOperacionRow[]>([]);
@@ -16,9 +18,14 @@ export default function CajaPage() {
 
   useEffect(() => {
     getCurrentUserRole().then((res) => {
-      if (res?.role === "admin") setIsAdmin(true);
+      const role = res?.role;
+      if (!role || role === "agent") {
+        router.replace("/installations");
+        return;
+      }
+      if (role === "admin") setIsAdmin(true);
     });
-  }, []);
+  }, [router]);
 
   const loadBalance = useCallback(async () => {
     const b = await getCajaBalance();
