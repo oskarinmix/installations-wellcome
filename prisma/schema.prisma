@@ -26,6 +26,7 @@ enum Currency {
 enum Role {
   admin
   agent
+  cashier
 }
 
 enum CajaOperationType {
