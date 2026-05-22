@@ -71,11 +71,11 @@ export async function getAllUsers() {
   });
   return users.map((u) => ({
     ...u,
-    role: u.role as "admin" | "agent",
+    role: u.role as "admin" | "agent" | "cashier",
   }));
 }
 
-export async function updateUserRole(userId: string, role: "admin" | "agent") {
+export async function updateUserRole(userId: string, role: "admin" | "agent" | "cashier") {
   await requireAdmin();
   await prisma.user.update({
     where: { id: userId },

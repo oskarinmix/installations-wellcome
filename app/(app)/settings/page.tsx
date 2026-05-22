@@ -92,7 +92,7 @@ export default function SettingsPage() {
   const [deletingBcvId, setDeletingBcvId] = useState<number | null>(null);
 
   // Users state
-  type UserRow = { id: string; name: string; email: string; role: "admin" | "agent"; createdAt: Date };
+  type UserRow = { id: string; name: string; email: string; role: "admin" | "agent" | "cashier"; createdAt: Date };
   const [users, setUsers] = useState<UserRow[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
@@ -169,7 +169,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: "admin" | "agent") => {
+  const handleRoleChange = async (userId: string, newRole: "admin" | "agent" | "cashier") => {
     setRoleUpdating(userId);
     try {
       await updateUserRole(userId, newRole);
@@ -660,7 +660,7 @@ export default function SettingsPage() {
                     <TableCell>
                       <Select
                         value={user.role}
-                        onValueChange={(v) => handleRoleChange(user.id, v as "admin" | "agent")}
+                        onValueChange={(v) => handleRoleChange(user.id, v as "admin" | "agent" | "cashier")}
                         disabled={roleUpdating === user.id}
                       >
                         <SelectTrigger className="w-32 h-8">
@@ -669,6 +669,7 @@ export default function SettingsPage() {
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="agent">Agent</SelectItem>
+                          <SelectItem value="cashier">Cajero</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
