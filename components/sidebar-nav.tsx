@@ -25,7 +25,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Panel", icon: LayoutDashboard, adminOnly: true },
   { href: "/installations", label: "Instalaciones", icon: Wrench },
-  { href: "/caja", label: "Caja", icon: Vault },
+  { href: "/caja", label: "Caja", icon: Vault, cajaOnly: true },
   { href: "/sellers", label: "Vendedores", icon: Users, adminOnly: true },
   { href: "/reports", label: "Reportes", icon: FileText, adminOnly: true },
   { href: "/check-user", label: "Consultar Cliente", icon: UserSearch, adminOnly: true },
@@ -58,7 +58,7 @@ export function SidebarNav() {
     <>
       <div className="flex h-14 items-center border-b px-4 gap-2">
         <span className="text-xl">📡</span>
-        <Link href={role === "agent" ? "/installations" : "/dashboard"} className="font-bold text-lg bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+        <Link href={role === "cashier" ? "/caja" : role === "agent" ? "/installations" : "/dashboard"} className="font-bold text-lg bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
           Wellcomm
         </Link>
         <button
@@ -70,7 +70,11 @@ export function SidebarNav() {
       </div>
       <nav className="flex flex-col gap-1 p-3 flex-1">
         {navItems
-          .filter((item) => !item.adminOnly || role === "admin")
+          .filter((item) => {
+            if (item.adminOnly) return role === "admin";
+            if (item.cajaOnly) return role === "admin" || role === "cashier";
+            return true;
+          })
           .map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -100,6 +104,8 @@ export function SidebarNav() {
                 "shrink-0 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium",
                 role === "admin"
                   ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                  : role === "cashier"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                   : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
               )}>
                 {role}
@@ -138,7 +144,7 @@ export function SidebarNav() {
           <Menu className="h-5 w-5" />
         </button>
         <span className="text-xl">📡</span>
-        <Link href={role === "agent" ? "/installations" : "/dashboard"} className="font-bold text-lg bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+        <Link href={role === "cashier" ? "/caja" : role === "agent" ? "/installations" : "/dashboard"} className="font-bold text-lg bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
           Wellcomm
         </Link>
       </div>
