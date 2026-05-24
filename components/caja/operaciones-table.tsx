@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { CajaOperacionRow, CajaFilters } from "@/lib/actions/caja";
-import { updateCajaStatus } from "@/lib/actions/caja";
+import { updateCajaStatus, deleteCajaOperacion } from "@/lib/actions/caja";
+import { EditOperacionDialog } from "@/components/caja/edit-operacion-dialog";
 
 interface OperacionesTableProps {
   rows: CajaOperacionRow[];
@@ -38,10 +39,19 @@ export function OperacionesTable({
   onRefresh,
 }: OperacionesTableProps) {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [editRow, setEditRow] = useState<CajaOperacionRow | null>(null);
 
   async function handleStatusChange(id: number, status: "REGISTRADO" | "CANCELADO") {
     setActionLoading(id);
     const result = await updateCajaStatus(id, status);
+    setActionLoading(null);
+    if (result.success) onRefresh();
+  }
+
+  async function handleDelete(id: number) {
+    if (!window.confirm("¿Eliminar esta operación permanentemente? Esta acción no se puede deshacer.")) return;
+    setActionLoading(id);
+    const result = await deleteCajaOperacion(id);
     setActionLoading(null);
     if (result.success) onRefresh();
   }
@@ -52,6 +62,11 @@ export function OperacionesTable({
 
   return (
     <div className="space-y-4">
+      <EditOperacionDialog
+        row={editRow}
+        onClose={() => setEditRow(null)}
+        onSuccess={onRefresh}
+      />
       {/* Filter bar */}
       <div className="flex flex-wrap gap-3 items-end">
         <input
@@ -184,6 +199,20 @@ export function OperacionesTable({
                             {actionLoading === row.id ? "..." : "Cancelar"}
                           </button>
                         )}
+                        <button
+                          onClick={() => setEditRow(row)}
+                          disabled={actionLoading === row.id}
+                          className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 disabled:opacity-50"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(row.id)}
+                          disabled={actionLoading === row.id}
+                          className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+                        >
+                          {actionLoading === row.id ? "..." : "Eliminar"}
+                        </button>
                       </div>
                     </td>
                   )}

@@ -20,6 +20,7 @@ import {
   X,
   UserSearch,
   Vault,
+  Router,
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/sellers", label: "Vendedores", icon: Users, adminOnly: true },
   { href: "/reports", label: "Reportes", icon: FileText, adminOnly: true },
   { href: "/check-user", label: "Consultar Cliente", icon: UserSearch, adminOnly: true },
+  { href: "/olts", label: "OLTs", icon: Router, adminOnly: true },
   { href: "/settings", label: "Configuración", icon: Settings, adminOnly: true },
 ];
 

@@ -114,6 +114,55 @@ export async function createCajaOperacion(
   return { success: true };
 }
 
+export type UpdateCajaOperacionInput = {
+  type: "DEPOSITO" | "RETIRO";
+  currency: "USD" | "BCV";
+  amount: number;
+  description: string;
+};
+
+export async function updateCajaOperacion(
+  id: number,
+  data: UpdateCajaOperacionInput
+): Promise<{ success: boolean; error?: string }> {
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "No autenticado" };
+  if (user.role !== "admin") return { success: false, error: "Solo el admin puede editar operaciones" };
+  if (!data.description.trim()) return { success: false, error: "Descripción requerida" };
+  if (data.amount <= 0) return { success: false, error: "Monto debe ser mayor a 0" };
+
+  const exists = await prisma.cajaOperacion.findUnique({ where: { id }, select: { id: true } });
+  if (!exists) return { success: false, error: "Operación no encontrada" };
+
+  await prisma.cajaOperacion.update({
+    where: { id },
+    data: {
+      type: data.type as CajaOperationType,
+      currency: data.currency as Currency,
+      amount: data.amount,
+      description: data.description.trim(),
+      updatedById: user.id,
+    },
+  });
+
+  return { success: true };
+}
+
+export async function deleteCajaOperacion(
+  id: number
+): Promise<{ success: boolean; error?: string }> {
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "No autenticado" };
+  if (user.role !== "admin") return { success: false, error: "Solo el admin puede eliminar operaciones" };
+
+  const exists = await prisma.cajaOperacion.findUnique({ where: { id }, select: { id: true } });
+  if (!exists) return { success: false, error: "Operación no encontrada" };
+
+  await prisma.cajaOperacion.delete({ where: { id } });
+
+  return { success: true };
+}
+
 export async function updateCajaStatus(
   id: number,
   status: "REGISTRADO" | "CANCELADO"
