@@ -323,17 +323,24 @@ export default function InstallationsPage() {
 
   const handleExportExcel = async () => {
     if (sorted.length === 0) return;
-    const XLSX = await import("xlsx");
+    const ExcelJS = (await import("exceljs")).default;
     const { headers, rows } = getExportData();
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    const colWidths = headers.map((h, i) => {
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet("Instalaciones");
+    ws.addRow(headers);
+    rows.forEach((r) => ws.addRow(r));
+    ws.columns = headers.map((h, i) => {
       const max = Math.max(h.length, ...rows.map((r) => String(r[i]).length));
-      return { wch: Math.min(max + 2, 30) };
+      return { width: Math.min(max + 2, 30) };
     });
-    ws["!cols"] = colWidths;
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Instalaciones");
-    XLSX.writeFile(wb, `instalaciones_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `instalaciones_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleExportPdf = async () => {

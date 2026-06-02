@@ -233,7 +233,7 @@ export async function uploadFile(formData: FormData): Promise<ParseResult & { up
   if (!file) throw new Error("No file provided");
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const result = parseExcelFile(buffer);
+  const result = await parseExcelFile(buffer);
 
   // Check against existing DB records for duplicates
   const existingKeys = new Set<string>();

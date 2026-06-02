@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { currencyFromPaymentMethod } from "./payment-methods";
 
 export interface ParsedSale {
@@ -64,7 +64,7 @@ const KNOWN_PAYMENT_VALUES = new Set([
 function normalizeKey(str: string): string {
   return str
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .trim()
     .replace(/\s+/g, " ");
@@ -89,9 +89,15 @@ function normalizeHeaders(headers: string[]): Map<string, number> {
 function parseDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === "") return null;
 
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  // Excel serial date fallback
   if (typeof value === "number") {
-    const date = XLSX.SSF.parse_date_code(value);
-    if (date) return new Date(date.y, date.m - 1, date.d);
+    const excelEpoch = new Date(1899, 11, 30);
+    const date = new Date(excelEpoch.getTime() + value * 86400000);
+    if (!isNaN(date.getTime())) return date;
   }
 
   const str = String(value).trim();
@@ -108,7 +114,6 @@ function parseDate(value: unknown): Date | null {
   return null;
 }
 
-
 function parseAmount(montoValue: unknown): number {
   if (typeof montoValue === "number") return montoValue;
   const str = String(montoValue || "0");
@@ -116,26 +121,48 @@ function parseAmount(montoValue: unknown): number {
   return parseFloat(cleaned) || 0;
 }
 
-export function parseExcelFile(buffer: Buffer): ParseResult {
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
+function cellValue(cell: ExcelJS.Cell): unknown {
+  const v = cell.value;
+  // Rich text → plain string
+  if (v && typeof v === "object" && "richText" in v) {
+    return (v as ExcelJS.CellRichTextValue).richText.map((r) => r.text).join("");
+  }
+  return v;
+}
+
+export async function parseExcelFile(buffer: Buffer): Promise<ParseResult> {
+  const workbook = new ExcelJS.Workbook();
+  const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+  await workbook.xlsx.load(arrayBuffer);
+  const worksheet = workbook.worksheets[0];
+
+  if (!worksheet) {
+    return { sales: [], totalRows: 0, validRows: 0, skippedRows: 0, duplicateRows: 0, duplicates: [], detectedHeaders: [], mappedColumns: {} };
+  }
+
+  // Build 0-indexed rows array from worksheet
+  const rows: unknown[][] = [];
+  worksheet.eachRow((row) => {
+    // ExcelJS row.values is 1-indexed; slice(1) makes it 0-indexed
+    rows.push((row.values as unknown[]).slice(1).map((_, i) => {
+      const cell = row.getCell(i + 1);
+      return cellValue(cell);
+    }));
+  });
 
   if (rows.length < 2) {
     return { sales: [], totalRows: 0, validRows: 0, skippedRows: 0, duplicateRows: 0, duplicates: [], detectedHeaders: [], mappedColumns: {} };
   }
 
-  const headers = (rows[0] as unknown[]).map(String);
+  const headers = (rows[0] as unknown[]).map((h) => String(h ?? ""));
   const colMap = normalizeHeaders(headers);
   const dataRows = rows.slice(1);
   const totalRows = dataRows.length;
 
   // The payment method values live in an unnamed column right after "Zona".
-  // Override any header-based match with the actual data column.
   const zonaIdx = colMap.get("zona");
   if (zonaIdx !== undefined && dataRows.length > 0) {
     const nextCol = zonaIdx + 1;
-    // Check if this unnamed column has known payment values
     const samplesToCheck = Math.min(10, dataRows.length);
     for (let r = 0; r < samplesToCheck; r++) {
       const cell = normalizeKey(String((dataRows[r] as unknown[])[nextCol] || ""));
