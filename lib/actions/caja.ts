@@ -95,8 +95,8 @@ export async function createCajaOperacion(
 ): Promise<{ success: boolean; error?: string }> {
   const user = await getAuthUser();
   if (!user) return { success: false, error: "No autenticado" };
-  if (data.type === "RETIRO" && user.role !== "admin") {
-    return { success: false, error: "Solo el admin puede registrar retiros" };
+  if (data.type === "RETIRO" && user.role !== "admin" && user.role !== "cashier") {
+    return { success: false, error: "Sin permiso para registrar retiros" };
   }
   if (!data.description.trim()) return { success: false, error: "Descripción requerida" };
   if (data.amount <= 0) return { success: false, error: "Monto debe ser mayor a 0" };

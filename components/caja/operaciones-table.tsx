@@ -145,6 +145,7 @@ export function OperacionesTable({
                 <th className="p-3 text-right">Monto</th>
                 <th className="p-3">Moneda</th>
                 <th className="p-3">Estado</th>
+                <th className="p-3">Cargado por</th>
                 <th className="p-3">Registrado por</th>
                 {isAdmin && <th className="p-3">Acciones</th>}
               </tr>
@@ -178,6 +179,7 @@ export function OperacionesTable({
                     </span>
                   </td>
                   <td className="p-3 text-muted-foreground">{row.createdByName}</td>
+                  <td className="p-3 text-muted-foreground">{row.updatedByName ?? "—"}</td>
                   {isAdmin && (
                     <td className="p-3">
                       <div className="flex gap-1">

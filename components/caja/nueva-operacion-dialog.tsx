@@ -81,8 +81,7 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
               <button
                 type="button"
                 onClick={() => setType("RETIRO")}
-                disabled={!isAdmin}
-                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                   type === "RETIRO"
                     ? "bg-red-100 border-red-500 text-red-800 dark:bg-red-950 dark:text-red-300"
                     : "hover:bg-accent"
@@ -91,9 +90,6 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
                 Retiro
               </button>
             </div>
-            {!isAdmin && (
-              <p className="text-xs text-muted-foreground">Solo admin puede registrar retiros</p>
-            )}
           </div>
 
           <div className="space-y-1.5">
