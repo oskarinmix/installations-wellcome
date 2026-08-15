@@ -212,6 +212,19 @@ export default function CheckUserPage() {
               </div>
             </div>
           )}
+
+          {/* Cambiar clave wifi */}
+          <div className="px-5 pb-4">
+            <a
+              href={`https://clavewifi.wct.com.ve/?i=${encodeURIComponent(String(record.id ?? ""))}&c=${encodeURIComponent(String(record.cedula ?? cedula).replace(/\D/g, ""))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Wifi className="h-4 w-4" />
+              Cambiar clave wifi
+            </a>
+          </div>
         </div>
       ))}
 
