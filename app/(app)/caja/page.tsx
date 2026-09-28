@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { BalanceCards } from "@/components/caja/balance-cards";
 import { OperacionesTable } from "@/components/caja/operaciones-table";
 import { NuevaOperacionDialog } from "@/components/caja/nueva-operacion-dialog";
+import { PromesaPagoDialog } from "@/components/caja/promesa-pago-dialog";
+import { Button } from "@/components/ui/button";
 import { getCajaBalance, getCajaOperaciones } from "@/lib/actions/caja";
 import type { CajaOperacionRow, CajaFilters } from "@/lib/actions/caja";
 import { getCurrentUserRole } from "@/lib/actions";
@@ -12,9 +14,11 @@ import { getCurrentUserRole } from "@/lib/actions";
 export default function CajaPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCashier, setIsCashier] = useState(false);
   const [balance, setBalance] = useState({ usd: 0, bcv: 0 });
   const [rows, setRows] = useState<CajaOperacionRow[]>([]);
   const [filters, setFilters] = useState<CajaFilters>({});
+  const [promesaOpen, setPromesaOpen] = useState(false);
 
   useEffect(() => {
     getCurrentUserRole().then((res) => {
@@ -24,6 +28,7 @@ export default function CajaPage() {
         return;
       }
       if (role === "admin") setIsAdmin(true);
+      if (role === "cashier") setIsCashier(true);
     });
   }, [router]);
 
@@ -60,8 +65,17 @@ export default function CajaPage() {
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <span>🏦</span> Caja
         </h1>
-        <NuevaOperacionDialog isAdmin={isAdmin} onSuccess={handleRefresh} />
+        <div className="flex items-center gap-2">
+          {(isAdmin || isCashier) && (
+            <Button type="button" variant="outline" onClick={() => setPromesaOpen(true)}>
+              Promesa de pago
+            </Button>
+          )}
+          <NuevaOperacionDialog isAdmin={isAdmin} onSuccess={handleRefresh} />
+        </div>
       </div>
+
+      <PromesaPagoDialog open={promesaOpen} onClose={() => setPromesaOpen(false)} />
 
       <BalanceCards
         usd={balance.usd}
@@ -74,6 +88,7 @@ export default function CajaPage() {
         rows={rows}
         filters={filters}
         isAdmin={isAdmin}
+        canValidarPago={isAdmin || isCashier}
         onFiltersChange={setFilters}
         onRefresh={handleRefresh}
       />

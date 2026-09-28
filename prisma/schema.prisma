@@ -239,6 +239,8 @@ model CajaOperacion {
   currency    Currency
   amount      Float
   description String
+  cedula      String?
+  validado    Boolean             @default(false)
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   createdById String

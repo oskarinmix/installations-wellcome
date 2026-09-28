@@ -3,6 +3,11 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/get-user-role";
 import type { CajaOperationType, CajaOperationStatus, Currency } from "@/lib/generated/prisma/client";
+import {
+  buscarFacturasVencidas,
+  confirmarPagoFactura,
+  type FacturaVencida,
+} from "@/lib/actions/mikrowisp";
 
 export async function getCajaBalance(): Promise<{ usd: number; bcv: number }> {
   const groups = await prisma.cajaOperacion.groupBy({
@@ -31,6 +36,8 @@ export type CajaOperacionRow = {
   currency: Currency;
   amount: number;
   description: string;
+  cedula: string | null;
+  validado: boolean;
   createdAt: string;
   createdByName: string;
   updatedByName: string | null;
@@ -77,6 +84,8 @@ export async function getCajaOperaciones(filters: CajaFilters): Promise<CajaOper
     currency: r.currency,
     amount: r.amount,
     description: r.description,
+    cedula: r.cedula,
+    validado: r.validado,
     createdAt: r.createdAt.toISOString(),
     createdByName: r.createdBy.name,
     updatedByName: r.updatedBy?.name ?? null,
@@ -88,6 +97,7 @@ export type CreateCajaOperacionInput = {
   currency: "USD" | "BCV";
   amount: number;
   description: string;
+  cedula?: string;
 };
 
 export async function createCajaOperacion(
@@ -107,6 +117,7 @@ export async function createCajaOperacion(
       currency: data.currency as Currency,
       amount: data.amount,
       description: data.description.trim(),
+      cedula: data.cedula?.trim() || null,
       createdById: user.id,
     },
   });
@@ -119,6 +130,7 @@ export type UpdateCajaOperacionInput = {
   currency: "USD" | "BCV";
   amount: number;
   description: string;
+  cedula?: string;
 };
 
 export async function updateCajaOperacion(
@@ -141,10 +153,27 @@ export async function updateCajaOperacion(
       currency: data.currency as Currency,
       amount: data.amount,
       description: data.description.trim(),
+      cedula: data.cedula?.trim() || null,
       updatedById: user.id,
     },
   });
 
+  return { success: true };
+}
+
+export async function marcarCajaValidado(
+  id: number,
+  validado: boolean
+): Promise<{ success: boolean; error?: string }> {
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "No autenticado" };
+
+  await prisma.cajaOperacion.update({
+    where: { id },
+    data: validado
+      ? { validado, status: "REGISTRADO", updatedById: user.id }
+      : { validado },
+  });
   return { success: true };
 }
 
@@ -186,4 +215,45 @@ export async function updateCajaStatus(
   }
 
   return { success: true };
+}
+
+export type ValidacionPagoResult =
+  | { status: "validado"; mensaje: string }
+  | { status: "manual"; idcliente: number; facturas: FacturaVencida[] }
+  | { status: "error"; error: string };
+
+export async function procesarValidacionPago(rowId: number): Promise<ValidacionPagoResult> {
+  const user = await getAuthUser();
+  if (!user) return { status: "error", error: "No autenticado" };
+
+  const row = await prisma.cajaOperacion.findUnique({ where: { id: rowId }, select: { cedula: true } });
+  if (!row) return { status: "error", error: "Operación no encontrada" };
+  if (!row.cedula) return { status: "error", error: "Esta operación no tiene cédula registrada" };
+
+  const busqueda = await buscarFacturasVencidas(row.cedula);
+  if (busqueda.error) return { status: "error", error: busqueda.error };
+  if (busqueda.notFound) return { status: "error", error: "Cliente no encontrado en Mikrowisp" };
+
+  const facturas = busqueda.facturas ?? [];
+  const idcliente = busqueda.idcliente!;
+
+  if (facturas.length === 0) {
+    await prisma.cajaOperacion.update({
+      where: { id: rowId },
+      data: { validado: true, status: "REGISTRADO", updatedById: user.id },
+    });
+    return { status: "validado", mensaje: "Cliente sin facturas vencidas" };
+  }
+
+  if (facturas.length === 1) {
+    const pago = await confirmarPagoFactura(facturas[0].id, idcliente);
+    if (!pago.success) return { status: "error", error: pago.error ?? "Error al confirmar el pago" };
+    await prisma.cajaOperacion.update({
+      where: { id: rowId },
+      data: { validado: true, status: "REGISTRADO", updatedById: user.id },
+    });
+    return { status: "validado", mensaje: "Pago validado automáticamente" };
+  }
+
+  return { status: "manual", idcliente, facturas };
 }

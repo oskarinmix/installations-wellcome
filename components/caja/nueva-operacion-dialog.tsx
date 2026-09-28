@@ -27,6 +27,7 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
   const [currency, setCurrency] = useState<"USD" | "BCV">("USD");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [cedula, setCedula] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,7 +38,13 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
       return;
     }
     setLoading(true);
-    const result = await createCajaOperacion({ type, currency, amount: parsed, description });
+    const result = await createCajaOperacion({
+      type,
+      currency,
+      amount: parsed,
+      description,
+      cedula: cedula || undefined,
+    });
     setLoading(false);
     if (!result.success) {
       setError(result.error ?? "Error desconocido");
@@ -46,6 +53,7 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
     setOpen(false);
     setAmount("");
     setDescription("");
+    setCedula("");
     setType("DEPOSITO");
     setCurrency("USD");
     onSuccess();
@@ -123,6 +131,18 @@ export function NuevaOperacionDialog({ isAdmin, onSuccess }: NuevaOperacionDialo
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
               required
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="cedula">Cédula del cliente (opcional)</Label>
+            <input
+              id="cedula"
+              type="text"
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value)}
+              placeholder="Ej. 12345678"
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
             />
           </div>

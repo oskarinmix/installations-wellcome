@@ -26,6 +26,7 @@ export function EditOperacionDialog({ row, onClose, onSuccess }: EditOperacionDi
   const [currency, setCurrency] = useState<"USD" | "BCV">("USD");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [cedula, setCedula] = useState("");
 
   useEffect(() => {
     if (row) {
@@ -33,6 +34,7 @@ export function EditOperacionDialog({ row, onClose, onSuccess }: EditOperacionDi
       setCurrency(row.currency as "USD" | "BCV");
       setAmount(row.amount.toString());
       setDescription(row.description);
+      setCedula(row.cedula ?? "");
       setError(null);
     }
   }, [row]);
@@ -47,7 +49,13 @@ export function EditOperacionDialog({ row, onClose, onSuccess }: EditOperacionDi
       return;
     }
     setLoading(true);
-    const result = await updateCajaOperacion(row.id, { type, currency, amount: parsed, description });
+    const result = await updateCajaOperacion(row.id, {
+      type,
+      currency,
+      amount: parsed,
+      description,
+      cedula: cedula || undefined,
+    });
     setLoading(false);
     if (!result.success) {
       setError(result.error ?? "Error desconocido");
@@ -123,6 +131,18 @@ export function EditOperacionDialog({ row, onClose, onSuccess }: EditOperacionDi
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
               required
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-cedula">Cédula del cliente (opcional)</Label>
+            <input
+              id="edit-cedula"
+              type="text"
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value)}
+              placeholder="Ej. 12345678"
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
             />
           </div>

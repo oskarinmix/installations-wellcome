@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { CajaOperacionRow, CajaFilters } from "@/lib/actions/caja";
-import { updateCajaStatus, deleteCajaOperacion } from "@/lib/actions/caja";
+import { updateCajaStatus, deleteCajaOperacion, marcarCajaValidado, procesarValidacionPago } from "@/lib/actions/caja";
 import { EditOperacionDialog } from "@/components/caja/edit-operacion-dialog";
+import { ValidarPagoDialog } from "@/components/caja/validar-pago-dialog";
 
 interface OperacionesTableProps {
   rows: CajaOperacionRow[];
   filters: CajaFilters;
   isAdmin: boolean;
+  canValidarPago: boolean;
   onFiltersChange: (filters: CajaFilters) => void;
   onRefresh: () => void;
 }
@@ -35,11 +38,39 @@ export function OperacionesTable({
   rows,
   filters,
   isAdmin,
+  canValidarPago,
   onFiltersChange,
   onRefresh,
 }: OperacionesTableProps) {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [editRow, setEditRow] = useState<CajaOperacionRow | null>(null);
+  const [manualRow, setManualRow] = useState<CajaOperacionRow | null>(null);
+  const showAcciones = isAdmin || canValidarPago;
+
+  async function handleValidarPago(row: CajaOperacionRow) {
+    if (!row.cedula) {
+      toast.error("Esta operación no tiene cédula registrada");
+      return;
+    }
+    setActionLoading(row.id);
+    const result = await procesarValidacionPago(row.id);
+    setActionLoading(null);
+    if (result.status === "validado") {
+      toast.success(result.mensaje);
+      onRefresh();
+    } else if (result.status === "manual") {
+      setManualRow(row);
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function handleManualValidated() {
+    if (!manualRow) return;
+    await marcarCajaValidado(manualRow.id, true);
+    setManualRow(null);
+    onRefresh();
+  }
 
   async function handleStatusChange(id: number, status: "REGISTRADO" | "CANCELADO") {
     setActionLoading(id);
@@ -66,6 +97,12 @@ export function OperacionesTable({
         row={editRow}
         onClose={() => setEditRow(null)}
         onSuccess={onRefresh}
+      />
+      <ValidarPagoDialog
+        open={manualRow != null}
+        initialCedula={manualRow?.cedula ?? undefined}
+        onClose={() => setManualRow(null)}
+        onValidated={handleManualValidated}
       />
       {/* Filter bar */}
       <div className="flex flex-wrap gap-3 items-end">
@@ -142,12 +179,14 @@ export function OperacionesTable({
                 <th className="p-3">Fecha</th>
                 <th className="p-3">Tipo</th>
                 <th className="p-3">Descripción</th>
+                <th className="p-3">Cédula</th>
                 <th className="p-3 text-right">Monto</th>
                 <th className="p-3">Moneda</th>
                 <th className="p-3">Estado</th>
+                <th className="p-3">Validado</th>
                 <th className="p-3">Cargado por</th>
                 <th className="p-3">Registrado por</th>
-                {isAdmin && <th className="p-3">Acciones</th>}
+                {showAcciones && <th className="p-3">Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -168,6 +207,7 @@ export function OperacionesTable({
                     </span>
                   </td>
                   <td className="p-3 max-w-xs truncate">{row.description}</td>
+                  <td className="p-3 text-muted-foreground whitespace-nowrap">{row.cedula ?? "—"}</td>
                   <td className={cn("p-3 text-right font-medium", row.type === "DEPOSITO" ? "text-green-600" : "text-red-500")}>
                     {row.type === "RETIRO" ? "-" : "+"}
                     {row.currency === "USD" ? "$" : "Bs."}{row.amount.toFixed(2)}
@@ -178,12 +218,24 @@ export function OperacionesTable({
                       {STATUS_LABELS[row.status]}
                     </span>
                   </td>
+                  <td className="p-3">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                        row.validado
+                          ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                          : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                      )}
+                    >
+                      {row.validado ? "Validado" : "Pendiente"}
+                    </span>
+                  </td>
                   <td className="p-3 text-muted-foreground">{row.createdByName}</td>
                   <td className="p-3 text-muted-foreground">{row.updatedByName ?? "—"}</td>
-                  {isAdmin && (
+                  {showAcciones && (
                     <td className="p-3">
                       <div className="flex gap-1">
-                        {row.status === "CARGADO" && (
+                        {isAdmin && row.status === "CARGADO" && (
                           <button
                             onClick={() => handleStatusChange(row.id, "REGISTRADO")}
                             disabled={actionLoading === row.id}
@@ -192,7 +244,7 @@ export function OperacionesTable({
                             {actionLoading === row.id ? "..." : "Registrar"}
                           </button>
                         )}
-                        {row.status !== "CANCELADO" && (
+                        {isAdmin && row.status !== "CANCELADO" && (
                           <button
                             onClick={() => handleStatusChange(row.id, "CANCELADO")}
                             disabled={actionLoading === row.id}
@@ -201,20 +253,33 @@ export function OperacionesTable({
                             {actionLoading === row.id ? "..." : "Cancelar"}
                           </button>
                         )}
-                        <button
-                          onClick={() => setEditRow(row)}
-                          disabled={actionLoading === row.id}
-                          className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 disabled:opacity-50"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(row.id)}
-                          disabled={actionLoading === row.id}
-                          className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
-                        >
-                          {actionLoading === row.id ? "..." : "Eliminar"}
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setEditRow(row)}
+                            disabled={actionLoading === row.id}
+                            className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 disabled:opacity-50"
+                          >
+                            Editar
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(row.id)}
+                            disabled={actionLoading === row.id}
+                            className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+                          >
+                            {actionLoading === row.id ? "..." : "Eliminar"}
+                          </button>
+                        )}
+                        {canValidarPago && !row.validado && row.cedula && (
+                          <button
+                            onClick={() => handleValidarPago(row)}
+                            disabled={actionLoading === row.id}
+                            className="rounded px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-950 dark:text-purple-300 disabled:opacity-50"
+                          >
+                            {actionLoading === row.id ? "..." : "Validar pago"}
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}
