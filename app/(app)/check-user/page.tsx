@@ -138,7 +138,6 @@ export default function CheckUserPage() {
             type="text"
             inputMode="numeric"
             pattern="\d{7,8}"
-            maxLength={8}
             value={cedula}
             onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="Ej: 12345678"
