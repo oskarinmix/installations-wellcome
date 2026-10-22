@@ -92,10 +92,12 @@ export default function CheckUserPage() {
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
+  const isValidCedula = /^\d{7,8}$/.test(cedula);
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = cedula.trim();
-    if (!trimmed) return;
+    if (!isValidCedula) return;
 
     setLoading(true);
     setError(null);
@@ -134,15 +136,18 @@ export default function CheckUserPage() {
           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
+            inputMode="numeric"
+            pattern="\d{7,8}"
+            maxLength={8}
             value={cedula}
-            onChange={(e) => setCedula(e.target.value)}
+            onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="Ej: 12345678"
             className="w-full pl-9 pr-4 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <button
           type="submit"
-          disabled={loading || !cedula.trim()}
+          disabled={loading || !isValidCedula}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
